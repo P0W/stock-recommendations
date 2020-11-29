@@ -1,0 +1,88 @@
+<!DOCTYPE html>
+<html lang="en">
+
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Stock Recomendations</title>
+    <link rel="stylesheet" href="https://maxcdn.bootstrapcdn.com/bootstrap/3.4.1/css/bootstrap.min.css">
+</head>
+
+<body>
+    <script src="https://ajax.googleapis.com/ajax/libs/jquery/3.5.1/jquery.min.js"></script>
+    <script src="https://maxcdn.bootstrapcdn.com/bootstrap/3.4.1/js/bootstrap.min.js"></script>
+
+
+    <div class="container">
+        <h2>Stock Recomendations</h2>
+        <p>Stock recomendations as collected from <a href="https://tickertape.in">tickertape.in</a> </p>
+        <input type="text" id="stockCount" value="15">
+        <input type="text" id="stocksDB" value="stocksLargeCap">
+        <table class="table table-hover table-condensed table-responsive">
+            <thead>
+                <tr>
+                    <th>Stock Name</th>
+                    <th>Sector</th>
+                    <th>Recomendations</th>
+                    <th>No. of Analysts</th>
+                </tr>
+            </thead>
+            <tbody id='main-table'>
+            </tbody>
+        </table>
+    </div>
+
+    <script>
+        var spinner = document.getElementById('stockCount');
+        var stocksDB = document.getElementById('stocksDB');
+        spinner.addEventListener('input', (evt) => {
+            inputChange();
+        });
+
+        stocksDB.addEventListener('input', (evt) => {
+            inputChange();
+        });
+
+        function inputChange() {
+            var stocksDBVal = stocksDB.value;
+            var stockCount = parseInt(spinner.value, 10);
+            var obj = { 'stocksDBVal': stocksDBVal, 'stockCount': stockCount };
+            var myJSON = JSON.stringify(obj);
+            fetch("/MoreData/" + myJSON)
+                .then(response => response.json())
+                .then((tableData) => {
+                    var tableDom = document.getElementById('main-table');
+                    Array.from(tableDom.rows).forEach(row => {
+                        tableDom.removeChild(row);
+                    })
+                    populateTable(tableData.chart_data);
+                })
+                .catch(() => { });
+        }
+
+        function populateTable(tableData) {
+            var tableDom = document.getElementById('main-table');
+            tableData.forEach((element, index) => {
+                var tr = document.createElement("tr");
+                tr.classList.add(index % 2 == 0 ? 'success' : 'info');
+                var td1 = document.createElement("td");
+                td1.innerHTML = element.stockName;
+                var td2 = document.createElement("td");
+                td2.innerHTML = element.stockSector;
+                var td3 = document.createElement("td");
+                td3.innerHTML = element.analystRec + '%';
+                var td4 = document.createElement("td");
+                td4.innerHTML = element.analystCount;
+                tr.appendChild(td1);
+                tr.appendChild(td2);
+                tr.appendChild(td3);
+                tr.appendChild(td4);
+                tableDom.append(tr);
+            });
+        }
+        var tableData = {{ data.chart_data | safe }};
+        populateTable(tableData);
+    </script>
+</body>
+
+</html>
