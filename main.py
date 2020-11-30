@@ -3,7 +3,8 @@
 
 import json
 from flask import Flask, render_template, request
-from _parseTickerTapeRecs import *
+import _parseTickerTapeRecs
+import _parseMoneyControl
 import os
 import datetime
 import time
@@ -40,7 +41,7 @@ app = Flask(__name__)
 def index():
     if request.method == 'GET':
         lastModifiedTime = modification_date('stocksLargeCap.db')
-        data = {'chart_data': getData(
+        data = {'chart_data': _parseMoneyControl.mergeDB(
             'stocksLargeCap', 15), 'lastModifiedTime': lastModifiedTime}
         return render_template("index.html", data=data)
     else:
@@ -52,7 +53,7 @@ def MoreData(jsdata):
     jsdata = json.loads(jsdata)
     db = jsdata['stocksDBVal']
     if db == 'stocksMidCap' or db == 'stocksLargeCap':
-        data = {'chart_data': getData(
+        data = {'chart_data': _parseMoneyControl.mergeDB(
             jsdata['stocksDBVal'], jsdata['stockCount'])}
         return data
     return []

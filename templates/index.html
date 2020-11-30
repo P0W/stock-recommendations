@@ -12,6 +12,12 @@
             height: 20px;
             border-radius: 2px;
         }
+
+        /* table tr td a {
+            display: block;
+            height: 100%;
+            width: 100%;
+        } */
     </style>
 </head>
 
@@ -38,6 +44,8 @@
                     <th>Sector</th>
                     <th>No. of Analysts</th>
                     <th>Buy Recomendations</th>
+                    <th>Technical Indicator</th>
+                    <th>Community Sentiments</th>
                 </tr>
             </thead>
             <tbody id='main-table'>
@@ -83,26 +91,39 @@
             var tableDom = document.getElementById('main-table');
             tableData.forEach((element, index) => {
                 var tr = document.createElement("tr");
-                tr.classList.add(index % 2 == 0 ? 'success' : 'info');
+                tr.classList.add(element.analystRec == 100 &&
+                    element.sentiment == 100 &&
+                    element.rating == 'Very Bullish'
+                    ? 'success' : 'info');
                 var td1 = document.createElement("td");
-                td1.innerHTML = element.stockName;
+
+                var hrefTag = document.createElement('a');
+                hrefTag.href = element.href;
+                hrefTag.target = "_blank";
+                hrefTag.innerHTML = element.stockName;
+                td1.append(hrefTag);
+
                 var td2 = document.createElement("td");
                 td2.innerHTML = element.stockSector;
                 var td3 = document.createElement("td");
-                td3.innerHTML = Math.ceil(0.01 * element.analystCount * element.analystRec) + ' out of ' + element.analystCount;
+                td3.innerHTML = Math.min(element.analystCount, Math.ceil(0.01 * element.analystCount * element.analystRec)) + ' out of ' + element.analystCount;
                 var td4 = document.createElement("td");
                 td4.innerHTML = element.analystRec + '%';
+                var td5 = document.createElement("td");
+                td5.innerHTML = element.rating
+                var td6 = document.createElement("td");
+                td6.innerHTML = element.sentiment + '%';
                 tr.appendChild(td1);
                 tr.appendChild(td2);
                 tr.appendChild(td3);
                 tr.appendChild(td4);
+                tr.appendChild(td5);
+                tr.appendChild(td6);
                 tableDom.append(tr);
             });
         }
         var tableData = {{ data.chart_data | safe }};
-        //var lastModifiedTime = {{ data.lastModifiedTime | safe}};;
         populateTable(tableData);
-        
     </script>
 </body>
 

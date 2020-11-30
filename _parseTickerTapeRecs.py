@@ -86,7 +86,7 @@ def createDataBase(databaseName='stocks', htmlPage=midCap150htmlPage):
     conn.close()
 
 
-def getData(databaseName, topCount):
+def getData(databaseName  = 'stocksLargeCap', topCount = 10):
     try:
         conn = sqlite3.connect('%s.db' % databaseName)
         c = conn.cursor()
@@ -105,7 +105,8 @@ def getData(databaseName, topCount):
                 'stockName': row[1],
                 'stockSector': row[2],
                 'analystRec': row[3],
-                'analystCount': row[4]
+                'analystCount': row[4],
+                'stockSymbol': row[0]
             })
         conn.close()
     except:
