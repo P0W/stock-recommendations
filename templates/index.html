@@ -22,8 +22,9 @@
 
     <div class="container">
         <h2>Stock bullishness by Analysts</h2>
-        <p>Stock recomendations as collected from <a href="https://tickertape.in">tickertape.in</a> </p>
-        <label for="stockCount">Max Entries:</label> <input type="text" id="stockCount"  class ='entry' value="15">
+        <p>Stock recomendations as collected from <a href="https://tickertape.in">tickertape.in</a>
+        </p>
+        <label for="stockCount">Max Entries:</label> <input type="text" id="stockCount" class='entry' value="15">
         <label for="stocksDB">Choose a Database:</label>
         <select name="stocksDB" id="stocksDB" class='entry'>
             <option value="stocksLargeCap">Nifty Index 50</option>
@@ -42,12 +43,16 @@
             <tbody id='main-table'>
             </tbody>
         </table>
+        <div>
+            Last Updated on: <span id='lastModifiedTime'>{{ data.lastModifiedTime | safe}}</span>
+        </div>
     </div>
 
     <script>
         var spinner = document.getElementById('stockCount');
         var stocksDB = document.getElementById('stocksDB');
         var showCount = document.getElementById('showCount');
+        var lastModifiedTime = document.getElementById('lastModifiedTime');
         spinner.addEventListener('input', (evt) => {
             inputChange();
         });
@@ -95,7 +100,9 @@
             });
         }
         var tableData = {{ data.chart_data | safe }};
+        //var lastModifiedTime = {{ data.lastModifiedTime | safe}};;
         populateTable(tableData);
+        
     </script>
 </body>
 
