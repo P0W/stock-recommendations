@@ -86,17 +86,14 @@ def createDataBase(databaseName='stocks', htmlPage=midCap150htmlPage):
     conn.close()
 
 
-def getData(databaseName  = 'stocksLargeCap', topCount = 10):
+def getData(databaseName='stocksLargeCap', topCount=10):
     try:
         conn = sqlite3.connect('%s.db' % databaseName)
         c = conn.cursor()
         data = []
         for row in c.execute('''SELECT * FROM stocks
-                                
                                 where analystRec between 0 AND 100
-                                
                                 order by
-                                    
                                     analystRec desc,
                                     analystCount desc,
                                     stockSector desc

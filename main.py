@@ -13,8 +13,9 @@ from apscheduler.schedulers.background import BackgroundScheduler
 
 
 def updateDatabases():
-    createDataBase('stocksLargeCap', htmlPath)
-    createDataBase('stocksMidCap', midCap150htmlPage)
+    _parseTickerTapeRecs.createDataBase('stocksLargeCap', htmlPath)
+    _parseTickerTapeRecs.createDataBase('stocksMidCap', midCap150htmlPage)
+    _parseMoneyControl.createDataBase()
 
 
 def print_date_time():
@@ -24,8 +25,6 @@ def print_date_time():
 scheduler = BackgroundScheduler()
 scheduler.add_job(func=updateDatabases, trigger="cron", hour='13', minute='30')
 scheduler.start()
-
-# Shut down the scheduler when exiting the app
 atexit.register(lambda: scheduler.shutdown())
 
 

@@ -13,11 +13,26 @@
             border-radius: 2px;
         }
 
-        /* table tr td a {
-            display: block;
-            height: 100%;
-            width: 100%;
-        } */
+        .bullish {
+            color: darkgreen;
+        }
+
+        .bearish {
+            color: red;
+        }
+
+        .neutral {
+            color: yellowgreen;
+            font-weight: bold;
+        }
+
+        .very {
+            font-weight: bold;
+        }
+
+        a {
+            font-weight: bold;
+        }
     </style>
 </head>
 
@@ -27,8 +42,9 @@
 
 
     <div class="container">
-        <h2>Stock bullishness by Analysts</h2>
-        <p>Stock recomendations as collected from <a href="https://tickertape.in">tickertape.in</a>
+        <h2>Market Sentiments</h2>
+        <p>Stock recomendations as collected from <a href="https://tickertape.in" target="_blank">tickertape.in</a> and
+            <a href="https://moneycontrol.com" target="_blank"> moneycontrol.com</a>
         </p>
         <label for="stockCount">Max Entries:</label> <input type="text" id="stockCount" class='entry' value="15">
         <label for="stocksDB">Choose a Database:</label>
@@ -91,15 +107,15 @@
             var tableDom = document.getElementById('main-table');
             tableData.forEach((element, index) => {
                 var tr = document.createElement("tr");
-                tr.classList.add(element.analystRec == 100 &&
-                    element.sentiment == 100 &&
+                tr.classList.add(element.analystRec === 100 &&
+                    element.sentiment === 100 &&
                     element.rating == 'Very Bullish'
                     ? 'success' : 'info');
                 var td1 = document.createElement("td");
 
                 var hrefTag = document.createElement('a');
                 hrefTag.href = element.href;
-                hrefTag.target = "_blank";
+                hrefTag.target = "_blank"; // Open in New Tab
                 hrefTag.innerHTML = element.stockName;
                 td1.append(hrefTag);
 
@@ -110,7 +126,19 @@
                 var td4 = document.createElement("td");
                 td4.innerHTML = element.analystRec + '%';
                 var td5 = document.createElement("td");
-                td5.innerHTML = element.rating
+                td5.innerHTML = element.rating;
+                if (element.rating.search('Bullish') > -1) {
+                    td5.classList.add('bullish');
+                } else if (element.rating.search('Bearish') > - 1) {
+                    td5.classList.add('bearish');
+                } else if (element.rating.search('Neutral') > - 1) {
+                    td5.classList.add('neutral');
+                }
+                if (element.rating.search('Very') > -1) {
+                    td5.classList.add('very');
+                } else {
+                    td5.classList.remove('very');
+                }
                 var td6 = document.createElement("td");
                 td6.innerHTML = element.sentiment + '%';
                 tr.appendChild(td1);
