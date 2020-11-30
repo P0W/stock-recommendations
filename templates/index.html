@@ -84,7 +84,7 @@
                 var td2 = document.createElement("td");
                 td2.innerHTML = element.stockSector;
                 var td3 = document.createElement("td");
-                td3.innerHTML = Math.floor(0.01 * element.analystCount * element.analystRec) + ' out of ' + element.analystCount;
+                td3.innerHTML = Math.ceil(0.01 * element.analystCount * element.analystRec) + ' out of ' + element.analystCount;
                 var td4 = document.createElement("td");
                 td4.innerHTML = element.analystRec + '%';
                 tr.appendChild(td1);
