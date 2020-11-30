@@ -62,6 +62,8 @@
                     <th>Buy Recomendations</th>
                     <th>Technical Indicator</th>
                     <th>Community Sentiments</th>
+                    <th>LTP (Rs)</th>
+                    <th>Price Change (Rs)</th>
                 </tr>
             </thead>
             <tbody id='main-table'>
@@ -141,12 +143,28 @@
                 }
                 var td6 = document.createElement("td");
                 td6.innerHTML = element.sentiment + '%';
+                var td7 = document.createElement("td");
+                td7.innerHTML = element.livePrice;
+                var td8 = document.createElement("td");
+                td8.innerHTML = element.livePriceChange;
+
+                if (element.livePriceChange.search('-') > -1) {
+                    td7.classList.add('bearish');
+                    td8.classList.add('bearish');
+                } else {
+                    td7.classList.add('bullish');
+                    td8.classList.add('bullish');
+                }
+                td7.classList.add('very');
+                td8.classList.add('very');
                 tr.appendChild(td1);
                 tr.appendChild(td2);
                 tr.appendChild(td3);
                 tr.appendChild(td4);
                 tr.appendChild(td5);
                 tr.appendChild(td6);
+                tr.appendChild(td7);
+                tr.appendChild(td8);
                 tableDom.append(tr);
             });
         }

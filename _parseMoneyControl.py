@@ -8,9 +8,12 @@ from bs4 import BeautifulSoup
 import requests
 import sqlite3
 
-
+htmlPage = r'https://www.moneycontrol.com/india/stockpricequote/refineries/relianceindustries/RI'
 def stockPage(htmlPage):
     soup = BeautifulSoup(requests.get(htmlPage).content, 'html.parser')
+    livePriceDOM = soup.find('div', {'class': 'div_live_price_wrap'})
+    livePrice = livePriceDOM.select_one('span.span_price_wrap').text
+    livePriceChange = livePriceDOM.select_one('span.span_price_change_prcnt').text
     symbolDOM = soup.find('p', {'class': 'bsns_pcst disin'}).select_one(
         'span:nth-child(2)')
     techRating = soup.select_one(
@@ -28,7 +31,11 @@ def stockPage(htmlPage):
             sentiment = int(sentiment, 10)
         except:
             sentiment = 0
-    return {'sentiment': sentiment, 'rating': rating, 'stockSymbol': symbolDOM.text}
+    return {'sentiment': sentiment,
+            'rating': rating,
+            'stockSymbol': symbolDOM.text,
+            'livePrice':livePrice,
+            'livePriceChange':livePriceChange}
 
 
 def nifty500(htmlPage='https://www.moneycontrol.com/markets/indian-indices/top-nse-500-companies-list/7?classic=true'):
@@ -78,7 +85,7 @@ def createDataBase(databaseName='moneyControlDB'):
 
     c.execute('''DROP TABLE IF EXISTS stocks''')
     c.execute('''CREATE TABLE stocks
-                 (href text, stockName text, stockSymbol text, rating text, sentiment real)''')
+                 (href text, stockName text, stockSymbol text, rating text, sentiment real, livePrice text, livePriceChange text)''')
 
     for result in results:
         columns = ', '.join(result.keys())
@@ -104,7 +111,9 @@ def getData(databaseName='moneyControlDB', topCount=100):
                 'stockName': row[1],
                 'symbol': row[2],
                 'rating': row[3],
-                'sentiment': row[4]
+                'sentiment': row[4],
+                'livePrice': row[5],
+                'livePriceChange': row[6]
             })
         conn.close()
     except:
@@ -124,7 +133,9 @@ def mergeDB(stocksLargeCap='stocksLargeCap', topCount=15, moneyControlDB='moneyC
                 main.stocks.analystCount,
                 moneyControlDB.stocks.rating,
                 moneyControlDB.stocks.sentiment,
-                moneyControlDB.stocks.href
+                moneyControlDB.stocks.href,
+                moneyControlDB.stocks.livePrice,
+                moneyControlDB.stocks.livePriceChange
         from main.stocks
         join moneyControlDB.stocks using ('stockSymbol')
             where moneyControlDB.stocks.stockSymbol = stocks.stockSymbol AND
@@ -144,6 +155,10 @@ def mergeDB(stocksLargeCap='stocksLargeCap', topCount=15, moneyControlDB='moneyC
             'analystCount': row[3],
             'rating': row[4],
             'sentiment': row[5],
-            'href': row[6]
+            'href': row[6],
+            'livePrice': row[7],
+            'livePriceChange': row[8]
         })
     return data
+
+# Check - TCS, TATASTEEL, CIPLA, KotakMBank, IOC
