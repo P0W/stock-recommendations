@@ -87,25 +87,27 @@ def createDataBase(databaseName='stocks', htmlPage=midCap150htmlPage):
 
 
 def getData(databaseName, topCount):
-    print('Requesting ...%d' % topCount)
-    conn = sqlite3.connect('%s.db' % databaseName)
-    c = conn.cursor()
-    data = []
-    for row in c.execute('''SELECT * FROM stocks
-                            
-                            where analystRec between 0 AND 100
-                            
-                            order by
+    try:
+        conn = sqlite3.connect('%s.db' % databaseName)
+        c = conn.cursor()
+        data = []
+        for row in c.execute('''SELECT * FROM stocks
                                 
-                                analystRec desc,
-                                analystCount desc,
-                                stockSector desc
-                                limit %d''' % topCount):
-        data.append({
-            'stockName': row[1],
-            'stockSector': row[2],
-            'analystRec': row[3],
-            'analystCount': row[4]
-        })
-    conn.close()
+                                where analystRec between 0 AND 100
+                                
+                                order by
+                                    
+                                    analystRec desc,
+                                    analystCount desc,
+                                    stockSector desc
+                                    limit %d''' % topCount):
+            data.append({
+                'stockName': row[1],
+                'stockSector': row[2],
+                'analystRec': row[3],
+                'analystCount': row[4]
+            })
+        conn.close()
+    except:
+        pass
     return data
