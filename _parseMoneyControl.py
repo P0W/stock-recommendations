@@ -8,6 +8,7 @@ from bs4 import BeautifulSoup
 import requests
 import sqlite3
 import re
+import sys
 
 htmlPage = r'https://www.moneycontrol.com/india/stockpricequote/pharmaceuticals/cipla/C'
 h = r'https://www.moneycontrol.com/india/stockpricequote/computers-software/tataconsultancyservices/TCS'
@@ -80,11 +81,9 @@ def nifty500(htmlPage='https://www.moneycontrol.com/markets/indian-indices/top-n
     return results
 
 
-def getStockInfo():
+def getStockInfo(TESTCOUNT =  sys.maxsize):
     allStocks = nifty500()
     allStocksInfo = []
-    TESTCOUNT = -1
-    #TESTCOUNT = 50
     for stocks in allStocks:
         print('Parsing page %s' % stocks['stockName'])
         try:
@@ -94,18 +93,18 @@ def getStockInfo():
             allStocksInfo.append(stockData)
         except:
             print('Error Parsing page %s' % stocks['href'])
-        if TESTCOUNT == 0:
+        if TESTCOUNT <= 0:
             break
-        #TESTCOUNT = TESTCOUNT - 1
+        TESTCOUNT = TESTCOUNT - 1
     return allStocksInfo
 
 
 results = []
 
 
-def createDataBase(databaseName='moneyControlDB'):
+def createDataBase(databaseName='moneyControlDB', testCount =  sys.maxsize):
     global results
-    results = getStockInfo()
+    results = getStockInfo(testCount)
     conn = sqlite3.connect('%s.db' % databaseName)
     c = conn.cursor()
 
@@ -123,11 +122,11 @@ def createDataBase(databaseName='moneyControlDB'):
     conn.close()
 
 
-def getData(databaseName='moneyControlDB', topCount=100):
+def getData(databaseName='/tmp/stock-recom/moneyControlDB', topCount=100):
+    data = []
     try:
         conn = sqlite3.connect('%s.db' % databaseName)
         c = conn.cursor()
-        data = []
         for row in c.execute('''SELECT * FROM stocks
                                 order by
                                     rating desc
@@ -147,7 +146,7 @@ def getData(databaseName='moneyControlDB', topCount=100):
     return data
 
 
-def mergeDB(stocksLargeCap='stocksLargeCap', topCount=15, moneyControlDB='moneyControlDB'):
+def mergeDB(stocksLargeCap='/tmp/stock-recom/stocksLargeCap', topCount=15, moneyControlDB='/tmp/stock-recom/moneyControlDB'):
     conn = sqlite3.connect('%s.db' % stocksLargeCap)
     conn.execute("ATTACH DATABASE '%s.db' AS moneyControlDB" % moneyControlDB)
     c = conn.cursor()

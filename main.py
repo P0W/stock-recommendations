@@ -26,15 +26,15 @@ def updateDatabases():
     _parseMoneyControl.createDataBase(rootFolder + 'moneyControlDB')
     print('----updating git reposiroty')
     _gitUtils.pushDBUpdate([
-        rootFolder + 'moneyControlDB',
-        rootFolder + 'stocksMidCap',
-        rootFolder + 'stocksLargeCap'
+        rootFolder + 'moneyControlDB.db',
+        rootFolder + 'stocksMidCap.db',
+        rootFolder + 'stocksLargeCap.db'
     ])
 
 
 scheduler = BackgroundScheduler()
 scheduler.configure(timezone=pytz.timezone('Asia/Kolkata'))
-scheduler.add_job(func=updateDatabases, trigger="cron", hour='10', minute='10')
+scheduler.add_job(func=updateDatabases, trigger="cron", hour='07', minute='35')
 scheduler.start()
 atexit.register(lambda: scheduler.shutdown())
 
@@ -42,10 +42,9 @@ atexit.register(lambda: scheduler.shutdown())
 def modification_date(filename):
     try:
         t = os.path.getmtime(filename)
-        print ('File Found')
+        print ('File Found %s' % filename)
         return datetime.datetime.utcfromtimestamp(t).replace(tzinfo=pytz.utc).astimezone(pytz.timezone("Asia/Kolkata")).strftime("%A, %d. %B %Y %I:%M:%S %p")
     except FileNotFoundError:
-        print ('File Not Found')
         _gitUtils.cloneORUpdate()
         return modification_date(rootFolder + 'stocksLargeCap.db')
 
@@ -56,10 +55,11 @@ app = Flask(__name__)
 @app.route("/",  methods=['GET', 'POST'])
 def index():
     if request.method == 'GET':
-        print ('Checking file timestamp')
+        print ('Checking file timestamp %s' % rootFolder + 'stocksLargeCap.db')
         lastModifiedTime = modification_date(rootFolder + 'stocksLargeCap.db')
         data = {'chart_data': _parseMoneyControl.mergeDB(
-            'stocksLargeCap', 15), 'lastModifiedTime': lastModifiedTime}
+            rootFolder + 'stocksLargeCap', 15,
+            rootFolder + 'moneyControlDB'), 'lastModifiedTime': lastModifiedTime}
         return render_template("index.html", data=data)
     else:
         pass
