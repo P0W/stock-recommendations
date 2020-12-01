@@ -1,4 +1,4 @@
-# stock-recomendations
-Stocks recomendations webscrapped from tickertape.in
+# Stock-Recommendations
+Stocks recommendations webscrapped from tickertape.in and moneycontrol.com techical indicator and community sentiments
 
-[**Check it live**](https://stock-recoms.el.r.appspot.com/)
+[**Check it live hosted on google cloud**](https://stock-recoms.el.r.appspot.com/)
