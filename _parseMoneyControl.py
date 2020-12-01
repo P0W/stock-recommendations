@@ -7,35 +7,61 @@
 from bs4 import BeautifulSoup
 import requests
 import sqlite3
+import re
 
-htmlPage = r'https://www.moneycontrol.com/india/stockpricequote/refineries/relianceindustries/RI'
+htmlPage = r'https://www.moneycontrol.com/india/stockpricequote/pharmaceuticals/cipla/C'
+h = r'https://www.moneycontrol.com/india/stockpricequote/computers-software/tataconsultancyservices/TCS'
+h2 = r'https://www.moneycontrol.com/india/stockpricequote/infrastructure-general/adaniportsspecialeconomiczone/MPS'
+h3 = r'https://www.moneycontrol.com/india/stockpricequote/glassglass-products/asahiindiaglass/AIG01'
 def stockPage(htmlPage):
+    
     soup = BeautifulSoup(requests.get(htmlPage).content, 'html.parser')
+    try:
+        buySentiment = soup.select_one('div.chart_fl > ul > li:nth-child(1)').text
+        sellSentiment = soup.select_one('div.chart_fl > ul > li:nth-child(2)').text
+        holdSentiment = soup.select_one('div.chart_fl > ul > li:nth-child(3)').text
+    except:
+        buySentiment = sellSentiment = holdSentiment = ''
     livePriceDOM = soup.find('div', {'class': 'div_live_price_wrap'})
-    livePrice = livePriceDOM.select_one('span.span_price_wrap').text
-    livePriceChange = livePriceDOM.select_one('span.span_price_change_prcnt').text
-    symbolDOM = soup.find('p', {'class': 'bsns_pcst disin'}).select_one(
+    if livePriceDOM:
+        livePrice = livePriceDOM.select_one('span.span_price_wrap').text
+        livePriceChange = livePriceDOM.select_one('span.span_price_change_prcnt').text
+        symbolDOM = soup.find('p', {'class': 'bsns_pcst disin'}).select_one(
         'span:nth-child(2)')
-    techRating = soup.select_one(
+        symbol = symbolDOM.text
+        techRating = soup.select_one(
         '#techan_daily > div > div.techrating.tecinD > div.mt15.CTR.pb20 > a')
-    communitySentiment = soup.select_one(
+        communitySentiment = soup.select_one(
         '#MshareElement > div > div > div.col_left > div > div > div.commounity_senti > div.chart_fr > div.txt_pernbd')
-    if techRating:
-        rating = techRating.attrs['title']
-    else:
-        rating = ''
-    sentiment = 0
-    if communitySentiment:
-        sentiment = communitySentiment.text.replace('%', '')
+        if techRating:
+            rating = techRating.attrs['title']
+        else:
+            rating = ''
+        sentiment = buySentiment
+        if communitySentiment:
+            sentiment = communitySentiment.text.replace('%', '')
         try:
             sentiment = int(sentiment, 10)
         except:
             sentiment = 0
+    else:
+        livePrice = soup.select_one('input#nsespotval').attrs['value']
+        livePriceChange = soup.select_one('div#nsechange').text
+        symbol = soup.select_one('a.inditrade').attrs['onclick']
+        techRating = soup.select_one('#drating_Very_Bullish')
+        sentiment = buySentiment
+        rating = techRating.text.replace('\n', '').strip()
+        st = re.search('placeOrder\(\'(\S+?)\',', symbol)
+        if st:
+            symbol = st.group(1)
     return {'sentiment': sentiment,
             'rating': rating,
-            'stockSymbol': symbolDOM.text,
+            'stockSymbol': symbol,
             'livePrice':livePrice,
-            'livePriceChange':livePriceChange}
+            'livePriceChange':livePriceChange,
+            'buySentiment': buySentiment,
+            'sellSentiment': sellSentiment,
+            'holdSentiment': holdSentiment}
 
 
 def nifty500(htmlPage='https://www.moneycontrol.com/markets/indian-indices/top-nse-500-companies-list/7?classic=true'):
@@ -85,7 +111,7 @@ def createDataBase(databaseName='moneyControlDB'):
 
     c.execute('''DROP TABLE IF EXISTS stocks''')
     c.execute('''CREATE TABLE stocks
-                 (href text, stockName text, stockSymbol text, rating text, sentiment real, livePrice text, livePriceChange text)''')
+                 (href text, stockName text, stockSymbol text, rating text, sentiment real, livePrice text, livePriceChange text, buySentiment text, sellSentiment text, holdSentiment text)''')
 
     for result in results:
         columns = ', '.join(result.keys())
@@ -135,7 +161,10 @@ def mergeDB(stocksLargeCap='stocksLargeCap', topCount=15, moneyControlDB='moneyC
                 moneyControlDB.stocks.sentiment,
                 moneyControlDB.stocks.href,
                 moneyControlDB.stocks.livePrice,
-                moneyControlDB.stocks.livePriceChange
+                moneyControlDB.stocks.livePriceChange,
+                moneyControlDB.stocks.buySentiment,
+                moneyControlDB.stocks.sellSentiment,
+                moneyControlDB.stocks.holdSentiment
         from main.stocks
         join moneyControlDB.stocks using ('stockSymbol')
             where moneyControlDB.stocks.stockSymbol = stocks.stockSymbol AND
@@ -162,3 +191,4 @@ def mergeDB(stocksLargeCap='stocksLargeCap', topCount=15, moneyControlDB='moneyC
     return data
 
 # Check - TCS, TATASTEEL, CIPLA, KotakMBank, IOC
+# 29782c42cdc0eaed5cd5bd903ce7873af0c3c661

@@ -2,3 +2,4 @@ Flask==1.1.2
 bs4
 requests
 APScheduler
+gitPython

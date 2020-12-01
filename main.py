@@ -5,6 +5,7 @@ import json
 from flask import Flask, render_template, request
 import _parseTickerTapeRecs
 import _parseMoneyControl
+import _gitUtils
 import os
 import datetime
 import time
@@ -12,17 +13,23 @@ import atexit
 import pytz
 from apscheduler.schedulers.background import BackgroundScheduler
 
-rootFolder = '/tmp/'
+rootFolder = '/tmp/stock-recom/'
+
+
 def updateDatabases():
-    print ('---- webscarpping tickertape.in ----')
-    _parseTickerTapeRecs.createDataBase(rootFolder + 'stocksLargeCap', _parseTickerTapeRecs.nifty50htmlPage)
-    _parseTickerTapeRecs.createDataBase(rootFolder + 'stocksMidCap', _parseTickerTapeRecs.midCap150htmlPage)
-    print ('---- webscarpping moneycontrol.com ----')
+    print('---- webscarpping tickertape.in ----')
+    _parseTickerTapeRecs.createDataBase(
+        rootFolder + 'stocksLargeCap', _parseTickerTapeRecs.nifty50htmlPage)
+    _parseTickerTapeRecs.createDataBase(
+        rootFolder + 'stocksMidCap', _parseTickerTapeRecs.midCap150htmlPage)
+    print('---- webscarpping moneycontrol.com ----')
     _parseMoneyControl.createDataBase(rootFolder + 'moneyControlDB')
-
-
-def print_date_time():
-    print(time.strftime("%A, %d. %B %Y %I:%M:%S %p"))
+    print('----updating git reposiroty')
+    _gitUtils.pushDBUpdate([
+        rootFolder + 'moneyControlDB',
+        rootFolder + 'stocksMidCap',
+        rootFolder + 'stocksLargeCap'
+    ])
 
 
 scheduler = BackgroundScheduler()
@@ -35,10 +42,12 @@ atexit.register(lambda: scheduler.shutdown())
 def modification_date(filename):
     try:
         t = os.path.getmtime(filename)
+        print ('File Found')
         return datetime.datetime.utcfromtimestamp(t).replace(tzinfo=pytz.utc).astimezone(pytz.timezone("Asia/Kolkata")).strftime("%A, %d. %B %Y %I:%M:%S %p")
     except FileNotFoundError:
-        updateDatabases()
-        return 'Data Not Available'
+        print ('File Not Found')
+        _gitUtils.cloneORUpdate()
+        return modification_date(rootFolder + 'stocksLargeCap.db')
 
 
 app = Flask(__name__)
@@ -47,6 +56,7 @@ app = Flask(__name__)
 @app.route("/",  methods=['GET', 'POST'])
 def index():
     if request.method == 'GET':
+        print ('Checking file timestamp')
         lastModifiedTime = modification_date(rootFolder + 'stocksLargeCap.db')
         data = {'chart_data': _parseMoneyControl.mergeDB(
             'stocksLargeCap', 15), 'lastModifiedTime': lastModifiedTime}
