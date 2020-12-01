@@ -123,7 +123,7 @@ def getData(databaseName='moneyControlDB', topCount=100):
 
 def mergeDB(stocksLargeCap='stocksLargeCap', topCount=15, moneyControlDB='moneyControlDB'):
     conn = sqlite3.connect('%s.db' % stocksLargeCap)
-    conn.execute("ATTACH DATABASE 'moneyControlDB.db' AS moneyControlDB")
+    conn.execute("ATTACH DATABASE '%s.db' AS moneyControlDB" % moneyControlDB)
     c = conn.cursor()
     data = []
     for row in c.execute('''

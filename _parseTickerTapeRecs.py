@@ -7,8 +7,9 @@ from bs4 import BeautifulSoup
 import requests
 import re
 import sqlite3
+import sys
 
-htmlPath = r'https://www.tickertape.in/indices/nifty-index-.NSEI/constituents?type=marketcap'
+nifty50htmlPage = r'https://www.tickertape.in/indices/nifty-index-.NSEI/constituents?type=marketcap'
 midCap150htmlPage = r'https://www.tickertape.in/indices/nifty-midcap-150-.NIMI150/constituents?type=marketcap'
 
 
@@ -33,7 +34,7 @@ def getAnalystCount(htmlPage):
         return -1
 
 
-def getStockInfo(htmlPage=htmlPath):
+def getStockInfo(htmlPage, testCount =  sys.maxsize):
     results = []
     pattern = re.compile('(.+?)\|(.+?)\|(.+)')
 
@@ -62,13 +63,16 @@ def getStockInfo(htmlPage=htmlPath):
                 'stockSector': stockSector,
                 'stockSymbol': stockSymbol
             })
+            testCount = testCount - 1
         except:
             print('Error on page %s' % childPageHTML)
+        if testCount <= 0:
+            break
     return results
 
 
-def createDataBase(databaseName='stocks', htmlPage=midCap150htmlPage):
-    results = getStockInfo(htmlPage)
+def createDataBase(databaseName, htmlPage, testCount =  sys.maxsize):
+    results = getStockInfo(htmlPage, testCount)
     conn = sqlite3.connect('%s.db' % databaseName)
     c = conn.cursor()
 
