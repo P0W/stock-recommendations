@@ -1,0 +1,12 @@
+{
+  "type": "service_account",
+  "project_id": "stock-recoms",
+  "private_key_id": "7ca4ef18c8e86655010e83f54b0254387eb06012",
+  "private_key": "-----BEGIN PRIVATE KEY-----\nMIIEvgIBADANBgkqhkiG9w0BAQEFAASCBKgwggSkAgEAAoIBAQCsYu9u9kd6npbJ\nU7Unqz1KR9NMX0vEwKnlWDZ4egSQ6Bz9XvSgWRVgXV6EDsY7xtsMMQkETag7iQOI\nxPClVJsXqj6xr4NC01awDyk04r34mortRCN1drnNt/eWKToHMqrEeY/qFFRUfNbx\nIyEEoIJ++yXexoZR7uZL1QsnQshBoyE3fAaQWkdgcoKnRoXRXm4h87rlegSK8O1G\ngtLkihsfpy5WCjVrYwQ2hq8yioKDmEGhK4LYzc0y6BgK0HQCKgwnr692mzaOLnXj\nMWpF+7ChyP3l5gKnIB8KYYntHcXQn+VxUMe6gzraLIxEEN27iSjbRe5D1poH7yNE\nPXY38kldAgMBAAECggEAIJyp48HTNXMVnxpHKe1HD8ulQWxA0wTIz2LAEUwyG3DR\n9Sv21vPra5rWU+DQp0PgMj7/j/EaC8NIqCHrzbdDDPfP2wETcbu2CWIg30iq/EJO\nWIMcuy7eCTlNrTp46B4xeLBvpa65Ym9ooV9OMogkD9425J2FkTADIOL5tHB5npLs\npDxnErzxoYa022Mponk+1udTe+PGMczaDplpgYYY3hyyPliAH8E1mbl7umKY8zDr\nd4rskyGnryGlU7S8yVUPReCMv9DcSo4rJU0gEBqtAHYmgVimXe1UVXGKlGs2s3yJ\nOvqBz2Y+ePNyQWryA5z1BvCRkkJmCf52U8rUgFgscQKBgQDYJ67Pu1Tu49o1kREu\nVoH2HJqNJEL1ydYG5lMQUT3pv6f8pLP2q1MJEjMQIvToUx3e/IJyjeq6Q8YRBa0g\nqd8rkIEIsAgnry3QuVgLP/GwJgQL65Hr7paop30VIoXZrHTxmYdJPQlEq7kjlBap\n68vC0Mun4pifG8bpyFeHmYT3TQKBgQDMKdKLmuQa3kjJrOCA5Fl7No3xKeaQhVFP\nfv/RdsZ9DmJOz5DYUKYbGJ4RpmwTx6kqWidxY5J7sP2qwdg2k1Vrz78Chzar1ZfO\nOltX4ouWRvq3+jt7b3brlZSyh6q+7u/zib4nAEKcqbDGokCnr/FA2xqTdnFxyl8m\n8SEpA18yUQKBgQCp8nFQJGJ/vKfI6/jNLPjbTtv40qTO6NUc8aQnNSjvil+ClOBl\ntYgAns2FB2b07rySoIfTl18Q+c5VfdgD0WuErgW1lemjgekMrVza43ib3RfbY2iE\nTj8n9R+0KUOBxETh26rxW0rZMgbLQVicWqcG0fD9W3xRxJ4dGwYut/ZCFQKBgQCV\nDG9WVhTzfJY9DcW0s4CUEEbd6k4V8g5jb/8JB6Jux+KDUMuY8H/jxjwX/JxocFoS\nvlCPWjclsBfw4qWbakJxe/Ahw17pYfz6pOXsqkpnwpflWny0Z7K02LX/BEZmL//j\nlwrIZEs9HjEdQnTbNvp088BaKZ02ipyezGj+DSUhkQKBgCGQglcCmY91t34TGX+V\nPUWN79/rdCIA7B0d3csTKa05UiRYxC4yO5h7TsQhKDBSEwdEY3kTTL1Y2xXKXxVv\nY7LOYyBYuj4047eFoKAo8LxubbYts3b4siSICTZWh/y4WYCeeOXHaZ+ZQMci5CW2\nMH9VbHhjhjulloGgEmeJf70T\n-----END PRIVATE KEY-----\n",
+  "client_email": "upload-and-download-database@stock-recoms.iam.gserviceaccount.com",
+  "client_id": "117565686914246624257",
+  "auth_uri": "https://accounts.google.com/o/oauth2/auth",
+  "token_uri": "https://oauth2.googleapis.com/token",
+  "auth_provider_x509_cert_url": "https://www.googleapis.com/oauth2/v1/certs",
+  "client_x509_cert_url": "https://www.googleapis.com/robot/v1/metadata/x509/upload-and-download-database%40stock-recoms.iam.gserviceaccount.com"
+}

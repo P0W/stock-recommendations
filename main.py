@@ -21,20 +21,19 @@ stocksMidCap = 'stocksMidCap.db'
 
 def updateDatabases():
     print('---- webscrapping moneycontrol.com ----')
-    _parseMoneyControl.createDataBase(rootFolder + 'moneyControlDB')
+    _parseMoneyControl.createDataBase(moneyControlDB)
     print('----updating git repository for moneyControlDB.db')
     _cloudStorage.uploadDB(moneyControlDB, moneyControlDB)
 
     print('---- webscrapping tickertape.in for nifty-50 stocks----')
     _parseTickerTapeRecs.createDataBase(
-        rootFolder + 'stocksLargeCap', _parseTickerTapeRecs.nifty50htmlPage)
-
+        stocksLargeCap, _parseTickerTapeRecs.nifty50htmlPage)
     print('----updating git repository for stocksLargeCap.db')
     _cloudStorage.uploadDB(stocksLargeCap, stocksLargeCap)
 
     print('---- webscrapping tickertape.in for mindcap-150 stocks----')
     _parseTickerTapeRecs.createDataBase(
-        rootFolder + 'stocksMidCap', _parseTickerTapeRecs.midCap150htmlPage)
+        stocksMidCap, _parseTickerTapeRecs.midCap150htmlPage)
     print('----updating git repository for stocksMidCap.db')
     _cloudStorage.uploadDB(stocksMidCap, stocksMidCap)
 
@@ -53,7 +52,7 @@ def modification_date(filename):
         return datetime.datetime.utcfromtimestamp(t).replace(tzinfo=pytz.utc).astimezone(pytz.timezone("Asia/Kolkata")).strftime("%A, %d. %B %Y %I:%M:%S %p")
     except FileNotFoundError:
         _cloudStorage.downloadDB(stocksLargeCap, rootFolder + stocksLargeCap)
-        _cloudStorage.downloadDB(stocksMidCap, rootFolder + stocksLargeCap)
+        _cloudStorage.downloadDB(stocksMidCap, rootFolder + stocksMidCap)
         _cloudStorage.downloadDB(moneyControlDB, rootFolder + moneyControlDB)
         return modification_date(rootFolder + stocksLargeCap)
 
@@ -80,7 +79,7 @@ def MoreData(jsdata):
     db = jsdata['stocksDBVal']
     if db == 'stocksMidCap' or db == 'stocksLargeCap':
         data = {'chart_data': _parseMoneyControl.mergeDB(
-            rootFolder + jsdata['stocksDBVal'], jsdata['stockCount'], rootFolder + 'moneyControlDB')}
+            rootFolder + db + '.db', jsdata['stockCount'], rootFolder + moneyControlDB)}
         return data
     return []
 

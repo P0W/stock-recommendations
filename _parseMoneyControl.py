@@ -155,7 +155,8 @@ def getData(databaseName='/tmp/stock-recom/moneyControlDB.db', topCount=100):
     return data
 
 
-def mergeDB(stocksLargeCap='/tmp/stock-recom/stocksLargeCap.db', topCount=15, moneyControlDB='/tmp/stock-recom/moneyControlDB.db'):
+def mergeDB(stocksLargeCap='/tmp/stocksLargeCap.db', topCount=15, moneyControlDB='/tmp/moneyControlDB.db'):
+    print ('moneyControlDB ===>' + moneyControlDB)
     conn = sqlite3.connect('%s' % stocksLargeCap)
     conn.execute("ATTACH DATABASE '%s' AS moneyControlDB" % moneyControlDB)
     c = conn.cursor()

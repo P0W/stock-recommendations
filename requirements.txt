@@ -4,3 +4,4 @@ requests
 APScheduler
 gitPython
 tqdm
+google-cloud-storage
