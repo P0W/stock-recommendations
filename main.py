@@ -35,7 +35,7 @@ def updateDatabases():
 
 scheduler = BackgroundScheduler()
 scheduler.configure(timezone=pytz.timezone('Asia/Kolkata'))
-scheduler.add_job(func=updateDatabases, trigger="cron", hour='19', minute='35')
+scheduler.add_job(func=updateDatabases, trigger="cron", hour='12', minute='47')
 scheduler.start()
 atexit.register(lambda: scheduler.shutdown())
 
@@ -78,5 +78,4 @@ def MoreData(jsdata):
 
 
 if __name__ == "__main__":
-    updateDatabases()
-    #app.run(host='127.0.0.1', port=8081, debug=True)
+    app.run(host='127.0.0.1', port=8081, debug=True)
