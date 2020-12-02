@@ -16,28 +16,34 @@ htmlPage = r'https://www.moneycontrol.com/india/stockpricequote/pharmaceuticals/
 h = r'https://www.moneycontrol.com/india/stockpricequote/computers-software/tataconsultancyservices/TCS'
 h2 = r'https://www.moneycontrol.com/india/stockpricequote/infrastructure-general/adaniportsspecialeconomiczone/MPS'
 h3 = r'https://www.moneycontrol.com/india/stockpricequote/glassglass-products/asahiindiaglass/AIG01'
+
+
 def stockPage(args):
     htmlPage = args['href']
     stockName = args['stockName']
     symbol = 'xyz'
     soup = BeautifulSoup(requests.get(htmlPage).content, 'html.parser')
     try:
-        buySentiment = soup.select_one('div.chart_fl > ul > li:nth-child(1)').text
-        sellSentiment = soup.select_one('div.chart_fl > ul > li:nth-child(2)').text
-        holdSentiment = soup.select_one('div.chart_fl > ul > li:nth-child(3)').text
+        buySentiment = soup.select_one(
+            'div.chart_fl > ul > li:nth-child(1)').text
+        sellSentiment = soup.select_one(
+            'div.chart_fl > ul > li:nth-child(2)').text
+        holdSentiment = soup.select_one(
+            'div.chart_fl > ul > li:nth-child(3)').text
     except:
         buySentiment = sellSentiment = holdSentiment = ''
     livePriceDOM = soup.find('div', {'class': 'div_live_price_wrap'})
     if livePriceDOM:
         livePrice = livePriceDOM.select_one('span.span_price_wrap').text
-        livePriceChange = livePriceDOM.select_one('span.span_price_change_prcnt').text
+        livePriceChange = livePriceDOM.select_one(
+            'span.span_price_change_prcnt').text
         symbolDOM = soup.find('p', {'class': 'bsns_pcst disin'}).select_one(
-        'span:nth-child(2)')
+            'span:nth-child(2)')
         symbol = symbolDOM.text
         techRating = soup.select_one(
-        '#techan_daily > div > div.techrating.tecinD > div.mt15.CTR.pb20 > a')
+            '#techan_daily > div > div.techrating.tecinD > div.mt15.CTR.pb20 > a')
         communitySentiment = soup.select_one(
-        '#MshareElement > div > div > div.col_left > div > div > div.commounity_senti > div.chart_fr > div.txt_pernbd')
+            '#MshareElement > div > div > div.col_left > div > div > div.commounity_senti > div.chart_fr > div.txt_pernbd')
         if techRating:
             rating = techRating.attrs['title']
         else:
@@ -62,18 +68,18 @@ def stockPage(args):
                 symbol = st.group(1)
         except:
             with open('/tmp/stock-parse-logs.txt', 'a') as fh:
-                fh.write('Cannot parse : %s\n'  % htmlPage)
+                fh.write('Cannot parse : %s\n' % htmlPage)
             return {}
-            
+
     return {'sentiment': sentiment,
             'rating': rating,
             'stockSymbol': symbol,
-            'livePrice':livePrice,
-            'livePriceChange':livePriceChange,
+            'livePrice': livePrice,
+            'livePriceChange': livePriceChange,
             'buySentiment': buySentiment,
             'sellSentiment': sellSentiment,
             'holdSentiment': holdSentiment,
-            'href' : htmlPage,
+            'href': htmlPage,
             'stockName': stockName}
 
 
@@ -93,7 +99,7 @@ def nifty500(htmlPage='https://www.moneycontrol.com/markets/indian-indices/top-n
     return results
 
 
-def getStockInfo(TESTCOUNT =  sys.maxsize):
+def getStockInfo(TESTCOUNT=sys.maxsize):
     allStocks = nifty500()
     allStocksInfo = []
     for stocks in allStocks:
@@ -111,8 +117,7 @@ def getStockInfo(TESTCOUNT =  sys.maxsize):
     return allStocksInfo
 
 
-
-def createDataBase(databaseName='moneyControlDB.db', testCount =  sys.maxsize):
+def createDataBase(databaseName='moneyControlDB.db', testCount=sys.maxsize):
     results = parallel_getStockInfo()
     conn = sqlite3.connect('%s' % databaseName)
     c = conn.cursor()
@@ -156,7 +161,7 @@ def getData(databaseName='/tmp/stock-recom/moneyControlDB.db', topCount=100):
 
 
 def mergeDB(stocksLargeCap='/tmp/stocksLargeCap.db', topCount=15, moneyControlDB='/tmp/moneyControlDB.db'):
-    print ('moneyControlDB ===>' + moneyControlDB)
+    print('moneyControlDB ===>' + moneyControlDB)
     conn = sqlite3.connect('%s' % stocksLargeCap)
     conn.execute("ATTACH DATABASE '%s' AS moneyControlDB" % moneyControlDB)
     c = conn.cursor()
@@ -195,14 +200,17 @@ def mergeDB(stocksLargeCap='/tmp/stocksLargeCap.db', topCount=15, moneyControlDB
             'sentiment': row[5],
             'href': row[6],
             'livePrice': row[7],
-            'livePriceChange': row[8]
+            'livePriceChange': row[8],
+            'buySentiment': row[9],
+            'sellSentiment': row[10],
+            'holdSentiment': row[11],
         })
     return data
 
 
 def parallel_getStockInfo():
     allStocks = nifty500()
-    print ('Total Pages to parse %s' % len(allStocks))
+    print('Total Pages to parse %s' % len(allStocks))
     pool = Pool(processes=20)
     results = []
     for stockInfo in tqdm.tqdm(pool.imap_unordered(stockPage, allStocks), total=len(allStocks)):

@@ -33,6 +33,14 @@
         a {
             font-weight: bold;
         }
+
+        li {
+            margin-top: 2px;
+            margin-bottom: 2px;
+            font-weight: bold;
+            font-family:'Times New Roman', Times, serif;
+            
+        }
     </style>
 </head>
 
@@ -142,7 +150,23 @@
                     td5.classList.remove('very');
                 }
                 var td6 = document.createElement("td");
-                td6.innerHTML = element.sentiment + '%';
+
+                var ul = document.createElement('ul');
+                var li1 = document.createElement('li');
+                li1.classList.add('bullish');
+                li1.innerHTML = element.buySentiment;
+                ul.appendChild(li1);
+                var li2 = document.createElement('li');
+                li2.classList.add('bearish');
+                li2.innerHTML = element.sellSentiment;
+                ul.appendChild(li2);
+                var li3 = document.createElement('li');
+                li3.classList.add('neutral');
+                li3.innerHTML = element.holdSentiment;
+                ul.appendChild(li3);
+                td6.appendChild(ul);
+
+                // td6.innerHTML = element.sentiment + '%';
                 var td7 = document.createElement("td");
                 td7.innerHTML = element.livePrice;
                 var td8 = document.createElement("td");
