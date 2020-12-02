@@ -17,24 +17,25 @@ rootFolder = '/tmp/stock-recom/'
 
 
 def updateDatabases():
-    print('---- webscarpping tickertape.in ----')
+    print('---- webscrapping moneycontrol.com ----')
+    _parseMoneyControl.createDataBase(rootFolder + 'moneyControlDB')
+    print('----updating git repository for moneyControlDB.db')
+    _gitUtils.pushDBUpdate([rootFolder + 'moneyControlDB.db'])
+    print('---- webscrapping tickertape.in for nifty-50 stocks----')
     _parseTickerTapeRecs.createDataBase(
         rootFolder + 'stocksLargeCap', _parseTickerTapeRecs.nifty50htmlPage)
+    print('----updating git repository for stocksLargeCap.db')
+    _gitUtils.pushDBUpdate([rootFolder + 'stocksLargeCap.db'])
+    print('---- webscrapping tickertape.in for mindcap-150 stocks----')
     _parseTickerTapeRecs.createDataBase(
         rootFolder + 'stocksMidCap', _parseTickerTapeRecs.midCap150htmlPage)
-    print('---- webscarpping moneycontrol.com ----')
-    _parseMoneyControl.createDataBase(rootFolder + 'moneyControlDB')
-    print('----updating git reposiroty')
-    _gitUtils.pushDBUpdate([
-        rootFolder + 'moneyControlDB.db',
-        rootFolder + 'stocksMidCap.db',
-        rootFolder + 'stocksLargeCap.db'
-    ])
+    print('----updating git repository for stocksMidCap.db')
+    _gitUtils.pushDBUpdate([rootFolder + 'stocksMidCap.db'])
 
 
 scheduler = BackgroundScheduler()
 scheduler.configure(timezone=pytz.timezone('Asia/Kolkata'))
-scheduler.add_job(func=updateDatabases, trigger="cron", hour='07', minute='35')
+scheduler.add_job(func=updateDatabases, trigger="cron", hour='19', minute='35')
 scheduler.start()
 atexit.register(lambda: scheduler.shutdown())
 
@@ -42,7 +43,7 @@ atexit.register(lambda: scheduler.shutdown())
 def modification_date(filename):
     try:
         t = os.path.getmtime(filename)
-        print ('File Found %s' % filename)
+        print('File Found %s' % filename)
         return datetime.datetime.utcfromtimestamp(t).replace(tzinfo=pytz.utc).astimezone(pytz.timezone("Asia/Kolkata")).strftime("%A, %d. %B %Y %I:%M:%S %p")
     except FileNotFoundError:
         _gitUtils.cloneORUpdate()
@@ -55,7 +56,7 @@ app = Flask(__name__)
 @app.route("/",  methods=['GET', 'POST'])
 def index():
     if request.method == 'GET':
-        print ('Checking file timestamp %s' % rootFolder + 'stocksLargeCap.db')
+        print('Checking file timestamp %s' % rootFolder + 'stocksLargeCap.db')
         lastModifiedTime = modification_date(rootFolder + 'stocksLargeCap.db')
         data = {'chart_data': _parseMoneyControl.mergeDB(
             rootFolder + 'stocksLargeCap', 15,
@@ -77,4 +78,5 @@ def MoreData(jsdata):
 
 
 if __name__ == "__main__":
-    app.run(host='127.0.0.1', port=8081, debug=True)
+    updateDatabases()
+    #app.run(host='127.0.0.1', port=8081, debug=True)

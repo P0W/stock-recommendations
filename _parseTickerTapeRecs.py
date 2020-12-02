@@ -4,10 +4,12 @@
 ## Description : Parses BUY rating from analysts into Sqlite3 DB from TickerTape.in
 
 from bs4 import BeautifulSoup
+from multiprocessing import Pool
 import requests
 import re
 import sqlite3
 import sys
+import tqdm
 
 nifty50htmlPage = r'https://www.tickertape.in/indices/nifty-index-.NSEI/constituents?type=marketcap'
 midCap150htmlPage = r'https://www.tickertape.in/indices/nifty-midcap-150-.NIMI150/constituents?type=marketcap'
@@ -33,11 +35,27 @@ def getAnalystCount(htmlPage):
     except:
         return -1
 
-
+def parseStockData(args):
+    childPageHTML = args['childPageHTML']
+    forecastPage = args['forecastPage']
+    stockName = args['stockName']
+    stockSector = args['stockSector']
+    stockSymbol = args['stockSymbol']
+    analystsData = visitChildPage(childPageHTML)
+    analystsCount = getAnalystCount(forecastPage)
+    return {
+        'analystRec': analystsData,
+                'analystCount': analystsCount,
+                'stockName': stockName,
+                'stockSector': stockSector,
+                'stockSymbol': stockSymbol
+        }
+    
+    
 def getStockInfo(htmlPage, testCount =  sys.maxsize):
     results = []
+    allStocks = []
     pattern = re.compile('(.+?)\|(.+?)\|(.+)')
-
     soup = BeautifulSoup(requests.get(htmlPage).content, "html.parser")
     tableHolder = soup.findAll('div', {'class': 'constituent-data-row-holder'})
     rootPage = r'https://www.tickertape.in'
@@ -54,11 +72,11 @@ def getStockInfo(htmlPage, testCount =  sys.maxsize):
             stockSector = st.group(3).strip()
         try:
             print('Parsing %s, %s, %s' % (stockName, stockSymbol, stockSector))
-            analystsData = visitChildPage(childPageHTML)
-            analystsCount = getAnalystCount(forecastPage)
-            results.append({
-                'analystRec': analystsData,
-                'analystCount': analystsCount,
+            #analystsData = visitChildPage(childPageHTML)
+            #analystsCount = getAnalystCount(forecastPage)
+            allStocks.append({
+                'childPageHTML': childPageHTML,
+                'forecastPage': forecastPage,
                 'stockName': stockName,
                 'stockSector': stockSector,
                 'stockSymbol': stockSymbol
@@ -68,6 +86,11 @@ def getStockInfo(htmlPage, testCount =  sys.maxsize):
             print('Error on page %s' % childPageHTML)
         if testCount <= 0:
             break
+    
+    pool = Pool(processes=20)
+    for stockInfo in tqdm.tqdm(pool.imap_unordered(parseStockData, allStocks), total=len(allStocks)):
+        if bool(stockInfo):
+            results.append(stockInfo)
     return results
 
 
@@ -113,3 +136,4 @@ def getData(databaseName='stocksLargeCap', topCount=10):
     except:
         pass
     return data
+

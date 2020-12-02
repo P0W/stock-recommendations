@@ -5,17 +5,21 @@
 
 
 from bs4 import BeautifulSoup
+from multiprocessing import Pool
 import requests
 import sqlite3
 import re
 import sys
+import tqdm
 
 htmlPage = r'https://www.moneycontrol.com/india/stockpricequote/pharmaceuticals/cipla/C'
 h = r'https://www.moneycontrol.com/india/stockpricequote/computers-software/tataconsultancyservices/TCS'
 h2 = r'https://www.moneycontrol.com/india/stockpricequote/infrastructure-general/adaniportsspecialeconomiczone/MPS'
 h3 = r'https://www.moneycontrol.com/india/stockpricequote/glassglass-products/asahiindiaglass/AIG01'
-def stockPage(htmlPage):
-    
+def stockPage(args):
+    htmlPage = args['href']
+    stockName = args['stockName']
+    symbol = 'xyz'
     soup = BeautifulSoup(requests.get(htmlPage).content, 'html.parser')
     try:
         buySentiment = soup.select_one('div.chart_fl > ul > li:nth-child(1)').text
@@ -46,15 +50,21 @@ def stockPage(htmlPage):
         except:
             sentiment = 0
     else:
-        livePrice = soup.select_one('input#nsespotval').attrs['value']
-        livePriceChange = soup.select_one('div#nsechange').text
-        symbol = soup.select_one('a.inditrade').attrs['onclick']
-        techRating = soup.select_one('#drating_Very_Bullish')
-        sentiment = buySentiment
-        rating = techRating.text.replace('\n', '').strip()
-        st = re.search('placeOrder\(\'(\S+?)\',', symbol)
-        if st:
-            symbol = st.group(1)
+        try:
+            livePrice = soup.select_one('input#nsespotval').attrs['value']
+            livePriceChange = soup.select_one('div#nsechange').text
+            symbol = soup.select_one('a.inditrade').attrs['onclick']
+            techRating = soup.select_one('#drating_Very_Bullish')
+            sentiment = buySentiment
+            rating = techRating.text.replace('\n', '').strip()
+            st = re.search('placeOrder\(\'(\S+?)\',', symbol)
+            if st:
+                symbol = st.group(1)
+        except:
+            with open('/tmp/stock-parse-logs.txt', 'a') as fh:
+                fh.write('Cannot parse %s'  % htmlPage)
+            return {}
+            
     return {'sentiment': sentiment,
             'rating': rating,
             'stockSymbol': symbol,
@@ -62,7 +72,9 @@ def stockPage(htmlPage):
             'livePriceChange':livePriceChange,
             'buySentiment': buySentiment,
             'sellSentiment': sellSentiment,
-            'holdSentiment': holdSentiment}
+            'holdSentiment': holdSentiment,
+            'href' : htmlPage,
+            'stockName': stockName}
 
 
 def nifty500(htmlPage='https://www.moneycontrol.com/markets/indian-indices/top-nse-500-companies-list/7?classic=true'):
@@ -87,9 +99,9 @@ def getStockInfo(TESTCOUNT =  sys.maxsize):
     for stocks in allStocks:
         print('Parsing page %s' % stocks['stockName'])
         try:
-            stockData = stockPage(stocks['href'])
-            stockData['stockName'] = stocks['stockName']
-            stockData['href'] = stocks['href']
+            stockData = stockPage(stocks)
+##            stockData['stockName'] = stocks['stockName']
+##            stockData['href'] = stocks['href']
             allStocksInfo.append(stockData)
         except:
             print('Error Parsing page %s' % stocks['href'])
@@ -99,12 +111,9 @@ def getStockInfo(TESTCOUNT =  sys.maxsize):
     return allStocksInfo
 
 
-results = []
-
 
 def createDataBase(databaseName='moneyControlDB', testCount =  sys.maxsize):
-    global results
-    results = getStockInfo(testCount)
+    results = parallel_getStockInfo()
     conn = sqlite3.connect('%s.db' % databaseName)
     c = conn.cursor()
 
@@ -188,6 +197,17 @@ def mergeDB(stocksLargeCap='/tmp/stock-recom/stocksLargeCap', topCount=15, money
             'livePriceChange': row[8]
         })
     return data
+
+
+def parallel_getStockInfo():
+    allStocks = nifty500()
+    print ('Total Pages to parse %s' % len(allStocks))
+    pool = Pool(processes=20)
+    results = []
+    for stockInfo in tqdm.tqdm(pool.imap_unordered(stockPage, allStocks), total=len(allStocks)):
+        if bool(stockInfo):
+            results.append(stockInfo)
+    return results
 
 # Check - TCS, TATASTEEL, CIPLA, KotakMBank, IOC
 # 29782c42cdc0eaed5cd5bd903ce7873af0c3c661
