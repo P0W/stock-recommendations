@@ -5,7 +5,7 @@
 
 
 from bs4 import BeautifulSoup
-from multiprocessing import Pool
+from multiprocessing import Pool, cpu_count
 import requests
 import sqlite3
 import re
@@ -202,7 +202,7 @@ def mergeDB(stocksLargeCap='/tmp/stock-recom/stocksLargeCap', topCount=15, money
 def parallel_getStockInfo():
     allStocks = nifty500()
     print ('Total Pages to parse %s' % len(allStocks))
-    pool = Pool(processes=20)
+    pool = Pool(processes=cpu_count())
     results = []
     for stockInfo in tqdm.tqdm(pool.imap_unordered(stockPage, allStocks), total=len(allStocks)):
         if bool(stockInfo):

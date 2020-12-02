@@ -35,7 +35,7 @@ def updateDatabases():
 
 scheduler = BackgroundScheduler()
 scheduler.configure(timezone=pytz.timezone('Asia/Kolkata'))
-scheduler.add_job(func=updateDatabases, trigger="cron", hour='12', minute='47')
+scheduler.add_job(func=updateDatabases, trigger="cron", hour='13', minute='09')
 scheduler.start()
 atexit.register(lambda: scheduler.shutdown())
 

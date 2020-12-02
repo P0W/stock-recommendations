@@ -4,7 +4,7 @@
 ## Description : Parses BUY rating from analysts into Sqlite3 DB from TickerTape.in
 
 from bs4 import BeautifulSoup
-from multiprocessing import Pool
+from multiprocessing import Pool, cpu_count
 import requests
 import re
 import sqlite3
@@ -87,7 +87,7 @@ def getStockInfo(htmlPage, testCount =  sys.maxsize):
         if testCount <= 0:
             break
     
-    pool = Pool(processes=20)
+    pool = Pool(processes=cpu_count())
     for stockInfo in tqdm.tqdm(pool.imap_unordered(parseStockData, allStocks), total=len(allStocks)):
         if bool(stockInfo):
             results.append(stockInfo)
