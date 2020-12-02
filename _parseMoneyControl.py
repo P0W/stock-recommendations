@@ -62,7 +62,7 @@ def stockPage(args):
                 symbol = st.group(1)
         except:
             with open('/tmp/stock-parse-logs.txt', 'a') as fh:
-                fh.write('Cannot parse %s'  % htmlPage)
+                fh.write('Cannot parse : %s\n'  % htmlPage)
             return {}
             
     return {'sentiment': sentiment,
@@ -112,9 +112,9 @@ def getStockInfo(TESTCOUNT =  sys.maxsize):
 
 
 
-def createDataBase(databaseName='moneyControlDB', testCount =  sys.maxsize):
+def createDataBase(databaseName='moneyControlDB.db', testCount =  sys.maxsize):
     results = parallel_getStockInfo()
-    conn = sqlite3.connect('%s.db' % databaseName)
+    conn = sqlite3.connect('%s' % databaseName)
     c = conn.cursor()
 
     c.execute('''DROP TABLE IF EXISTS stocks''')
@@ -131,10 +131,10 @@ def createDataBase(databaseName='moneyControlDB', testCount =  sys.maxsize):
     conn.close()
 
 
-def getData(databaseName='/tmp/stock-recom/moneyControlDB', topCount=100):
+def getData(databaseName='/tmp/stock-recom/moneyControlDB.db', topCount=100):
     data = []
     try:
-        conn = sqlite3.connect('%s.db' % databaseName)
+        conn = sqlite3.connect('%s' % databaseName)
         c = conn.cursor()
         for row in c.execute('''SELECT * FROM stocks
                                 order by
@@ -155,9 +155,9 @@ def getData(databaseName='/tmp/stock-recom/moneyControlDB', topCount=100):
     return data
 
 
-def mergeDB(stocksLargeCap='/tmp/stock-recom/stocksLargeCap', topCount=15, moneyControlDB='/tmp/stock-recom/moneyControlDB'):
-    conn = sqlite3.connect('%s.db' % stocksLargeCap)
-    conn.execute("ATTACH DATABASE '%s.db' AS moneyControlDB" % moneyControlDB)
+def mergeDB(stocksLargeCap='/tmp/stock-recom/stocksLargeCap.db', topCount=15, moneyControlDB='/tmp/stock-recom/moneyControlDB.db'):
+    conn = sqlite3.connect('%s' % stocksLargeCap)
+    conn.execute("ATTACH DATABASE '%s' AS moneyControlDB" % moneyControlDB)
     c = conn.cursor()
     data = []
     for row in c.execute('''
@@ -202,7 +202,7 @@ def mergeDB(stocksLargeCap='/tmp/stock-recom/stocksLargeCap', topCount=15, money
 def parallel_getStockInfo():
     allStocks = nifty500()
     print ('Total Pages to parse %s' % len(allStocks))
-    pool = Pool(processes=cpu_count())
+    pool = Pool(processes=20)
     results = []
     for stockInfo in tqdm.tqdm(pool.imap_unordered(stockPage, allStocks), total=len(allStocks)):
         if bool(stockInfo):

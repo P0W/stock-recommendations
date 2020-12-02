@@ -87,7 +87,7 @@ def getStockInfo(htmlPage, testCount =  sys.maxsize):
         if testCount <= 0:
             break
     
-    pool = Pool(processes=cpu_count())
+    pool = Pool(processes=20)
     for stockInfo in tqdm.tqdm(pool.imap_unordered(parseStockData, allStocks), total=len(allStocks)):
         if bool(stockInfo):
             results.append(stockInfo)
@@ -96,7 +96,7 @@ def getStockInfo(htmlPage, testCount =  sys.maxsize):
 
 def createDataBase(databaseName, htmlPage, testCount =  sys.maxsize):
     results = getStockInfo(htmlPage, testCount)
-    conn = sqlite3.connect('%s.db' % databaseName)
+    conn = sqlite3.connect('%s' % databaseName)
     c = conn.cursor()
 
     c.execute('''DROP TABLE IF EXISTS stocks''')
@@ -113,9 +113,9 @@ def createDataBase(databaseName, htmlPage, testCount =  sys.maxsize):
     conn.close()
 
 
-def getData(databaseName='stocksLargeCap', topCount=10):
+def getData(databaseName='stocksLargeCap.db', topCount=10):
     try:
-        conn = sqlite3.connect('%s.db' % databaseName)
+        conn = sqlite3.connect('%s' % databaseName)
         c = conn.cursor()
         data = []
         for row in c.execute('''SELECT * FROM stocks
