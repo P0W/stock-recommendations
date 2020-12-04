@@ -5,11 +5,12 @@ import json
 from flask import Flask, render_template, request
 import _parseTickerTapeRecs
 import _parseMoneyControl
-import _cloudStorage
 import os
 import sys
 import datetime
 import pytz
+
+import _cloudStorage
 
 rootFolder = '/tmp/'
 moneyControlDB = 'moneyControlDB.db'
@@ -17,8 +18,10 @@ stocksLargeCap = 'stocksLargeCap.db'
 stocksMidCap = 'stocksMidCap.db'
 timeStampFile = 'timestamp.txt'
 
+
 def getCurrentTimeStamp():
     return datetime.datetime.now().astimezone(pytz.timezone("Asia/Kolkata")).strftime("%A, %d. %B %Y %I:%M:%S %p")
+
 
 def updateDatabases():
     print('---- webscrapping moneycontrol.com ----')
@@ -59,6 +62,7 @@ def modification_date():
 
 app = Flask(__name__)
 
+
 @app.route("/",  methods=['GET', 'POST'])
 def index():
     if request.method == 'GET':
@@ -86,7 +90,7 @@ def MoreData(jsdata):
 if __name__ == "__main__":
     if len(sys.argv) > 1:
         if sys.argv[1] == 'update':
-            os.environ['GOOGLE_APPLICATION_CREDENTIALS'] = './stocks-recom.json'
+            os.environ['GOOGLE_APPLICATION_CREDENTIALS'] = './../stocks-recom.json'
             updateDatabases()
     else:
         app.run(host='127.0.0.1', port=8081, debug=True)

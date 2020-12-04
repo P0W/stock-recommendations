@@ -5,3 +5,4 @@ APScheduler
 gitPython
 tqdm
 google-cloud-storage
+GoogleAppEngineCloudStorageClient==1.9.22.1

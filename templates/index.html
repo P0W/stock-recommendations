@@ -8,6 +8,15 @@
     <link rel="stylesheet" href="https://maxcdn.bootstrapcdn.com/bootstrap/3.4.1/css/bootstrap.min.css">
 
     <style>
+        .panel-body {
+            width: 100%;
+            height: 800px;
+            overflow-y: auto;
+            overflow-x: hidden;
+            position: sticky;
+            top: 0;
+        }
+
         .entry {
             height: 20px;
             border-radius: 2px;
@@ -38,8 +47,23 @@
             margin-top: 2px;
             margin-bottom: 2px;
             font-weight: bold;
-            font-family:'Times New Roman', Times, serif;
-            
+            font-family: 'Times New Roman', Times, serif;
+
+        }
+
+        thead th {
+            position: sticky;
+            top: 0;
+        }
+
+        table {
+            border-collapse: collapse;
+            width: 100%;
+        }
+
+        /* th, td { padding: 8px 16px; } */
+        th {
+            background: #eee;
         }
     </style>
 </head>
@@ -61,22 +85,25 @@
             <option value="stocksMidCap">Nifty Midcap 150</option>
         </select>
         <label for="showCount"> Current Count:</label> <span id="showCount">15</span>
-        <table class="table table-hover table-condensed table-responsive">
-            <thead>
-                <tr>
-                    <th>Stock Name</th>
-                    <th>Sector</th>
-                    <th>No. of Analysts</th>
-                    <th>Buy Recomendations</th>
-                    <th>Technical Indicator</th>
-                    <th>Community Sentiments</th>
-                    <th>LTP (Rs)</th>
-                    <th>Price Change (Rs)</th>
-                </tr>
-            </thead>
-            <tbody id='main-table'>
-            </tbody>
-        </table>
+
+        <div class="panel-body">
+            <table class="table table-bordered">
+                <thead>
+                    <tr>
+                        <th>Stock Name</th>
+                        <th>Sector</th>
+                        <th>No. of Analysts</th>
+                        <th>Buy Recomendations</th>
+                        <th>Technical Indicator</th>
+                        <th>Community Sentiments</th>
+                        <th>LTP (Rs)</th>
+                        <th>Price Change (Rs)</th>
+                    </tr>
+                </thead>
+                <tbody id='main-table'>
+                </tbody>
+            </table>
+        </div>
         <div>
             Last Updated on: <span id='lastModifiedTime'>{{ data.lastModifiedTime | safe}}</span>
         </div>
@@ -166,7 +193,6 @@
                 ul.appendChild(li3);
                 td6.appendChild(ul);
 
-                // td6.innerHTML = element.sentiment + '%';
                 var td7 = document.createElement("td");
                 td7.innerHTML = element.livePrice;
                 var td8 = document.createElement("td");
