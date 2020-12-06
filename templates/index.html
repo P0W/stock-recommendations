@@ -14,6 +14,7 @@
             overflow-y: auto;
             overflow-x: auto;
             position: sticky;
+            padding: 0px;
             top: 0;
         }
 
@@ -39,6 +40,14 @@
             font-weight: bold;
         }
 
+        .table {
+            margin-bottom: 0px;
+        }
+
+        .table-bordered {
+            border: 0px solid #ddd;
+        }
+
         a {
             font-weight: bold;
         }
@@ -48,22 +57,16 @@
             margin-bottom: 2px;
             font-weight: bold;
             font-family: 'Times New Roman', Times, serif;
-
         }
 
         thead th {
             position: sticky;
-            top: 0;
+            top: 0px;
+            cursor: pointer;
         }
 
-        table {
-            border-collapse: collapse;
-            width: 100%;
-        }
-
-        /* th, td { padding: 8px 16px; } */
         th {
-            background: #eee;
+            background: darkgrey;
         }
     </style>
 </head>
@@ -72,32 +75,49 @@
     <script src="https://ajax.googleapis.com/ajax/libs/jquery/3.5.1/jquery.min.js"></script>
     <script src="https://maxcdn.bootstrapcdn.com/bootstrap/3.4.1/js/bootstrap.min.js"></script>
 
-
     <div class="container">
         <h2>Market Sentiments</h2>
         <p>Stock recomendations as collected from <a href="https://tickertape.in" target="_blank">tickertape.in</a> and
             <a href="https://moneycontrol.com" target="_blank"> moneycontrol.com</a>
         </p>
-        <label for="stockCount">Max Entries:</label> <input type="text" id="stockCount" class='entry' value="15">
-        <label for="stocksDB">Choose a Database:</label>
-        <select name="stocksDB" id="stocksDB" class='entry'>
-            <option value="stocksLargeCap">Nifty Index 50</option>
-            <option value="stocksMidCap">Nifty Midcap 150</option>
-        </select>
-        <label for="showCount"> Current Count:</label> <span id="showCount">15</span>
+        <table class="table table-bordered controls">
+            <tr>
+                <td>
+                    <label for="stockCount">Max Entries:</label> <input type="text" id="stockCount" class='entry' value="15">
+                </td>
+                <td>
+                    <label for="stocksDB">Choose a Database:</label>
+                </td>
+                <td>
+                    <select name="stocksDB" id="stocksDB" class='entry'>
+                        <option value="stocksLargeCap">Nifty Index 50</option>
+                        <option value="stocksMidCap">Nifty Midcap 150</option>
+                    </select>
+                </td>
+                <td>
+                    <label for="showCount"> Current Count:</label> <span id="showCount">15</span>
+                </td>
+                <td>
+                    <label for="searchField"> Search:</label> <input type="text" id="searchField" class='entry' value="">
+                </td>
+            </tr>
+        </table>
+        
+        
+
 
         <div class="panel-body">
             <table class="table table-bordered">
                 <thead>
                     <tr>
-                        <th>Stock Name</th>
-                        <th>Sector</th>
-                        <th>No. of Analysts</th>
-                        <th>Buy Recomendations</th>
-                        <th>Technical Indicator</th>
-                        <th>Community Sentiments</th>
-                        <th>LTP (Rs)</th>
-                        <th>Price Change (Rs)</th>
+                        <th class='header'>Stock Name</th>
+                        <th class='header'>Sector</th>
+                        <th class='header'>No. of Analysts</th>
+                        <th class='header'>Buy Recomendations</th>
+                        <th class='header'>Technical Indicator</th>
+                        <th class='header'>Community Sentiments</th>
+                        <th class='header'>LTP (Rs)</th>
+                        <th class='header'>Price Change (Rs)</th>
                     </tr>
                 </thead>
                 <tbody id='main-table'>
@@ -114,6 +134,122 @@
         var stocksDB = document.getElementById('stocksDB');
         var showCount = document.getElementById('showCount');
         var lastModifiedTime = document.getElementById('lastModifiedTime');
+        var searchField = document.getElementById('searchField');
+
+        var headerDoms = document.getElementsByClassName('header');
+
+        var sortOrders = {
+            'Stock Name': false,
+            'Sector': false,
+            'No. of Analysts': false,
+            'Buy Recomendations': false,
+            'Technical Indicator': false,
+            'Community Sentiments': false,
+            'LTP (Rs)': false,
+            'Price Change (Rs)': true
+        };
+
+        Array.from(headerDoms).forEach(dom => {
+            dom.addEventListener('click', (evt) => {
+                sortOrders[evt.target.innerHTML] = !sortOrders[evt.target.innerHTML];
+                var ascending = sortOrders[evt.target.innerHTML];
+                switch (evt.target.innerHTML) {
+                    case 'Stock Name':
+                        if (dataReceived !== null) {
+                            if (ascending) {
+                                dataReceived.sort((lhs, rhs) => lhs.stockName.localeCompare(rhs.stockName));
+                            } else {
+                                dataReceived.reverse();
+                            }
+                            clearTable();
+                            filteredDisplay(dataReceived);
+                        }
+                        break;
+                    case 'Sector':
+                        if (dataReceived !== null) {
+                            if (ascending) {
+                                dataReceived.sort((lhs, rhs) => lhs.stockSector.localeCompare(rhs.stockSector));
+                            } else {
+                                dataReceived.reverse();
+                            }
+                            clearTable();
+                            filteredDisplay(dataReceived);
+                        }
+                        break;
+                    case 'No. of Analysts':
+                        if (dataReceived !== null) {
+                            if (ascending) {
+                                dataReceived.sort((lhs, rhs) => lhs.analystCount - rhs.analystCount);
+                            } else {
+                                dataReceived.reverse();
+                            }
+                            clearTable();
+                            filteredDisplay(dataReceived);
+                        }
+                        break;
+                    case 'Buy Recomendations':
+                        if (dataReceived !== null) {
+                            if (ascending) {
+                                dataReceived.sort((lhs, rhs) => lhs.analystRec - rhs.analystRec);
+                            } else {
+                                dataReceived.reverse();
+                            }
+                            clearTable();
+                            filteredDisplay(dataReceived);
+                        }
+                        break;
+                    case 'Technical Indicator':
+                        if (dataReceived !== null) {
+                            if (ascending) {
+                                dataReceived.sort((lhs, rhs) => lhs.rating.localeCompare(rhs.rating));
+                            } else {
+                                dataReceived.reverse();
+                            }
+                            clearTable();
+                            filteredDisplay(dataReceived);
+                        }
+                        break;
+                    case 'Community Sentiments':
+                        if (dataReceived !== null) {
+                            if (ascending) {
+                                dataReceived.sort((lhs, rhs) => lhs.buySentiment.localeCompare(rhs.buySentiment));
+                            } else {
+                                dataReceived.reverse();
+                            }
+                            clearTable();
+                            filteredDisplay(dataReceived);
+                        }
+                        break;
+                    case 'LTP (Rs)':
+                        if (dataReceived !== null) {
+                            if (ascending) {
+                                dataReceived.sort((lhs, rhs) => lhs.livePrice - rhs.livePrice);
+                            } else {
+                                dataReceived.reverse();
+                            }
+                            clearTable();
+                            filteredDisplay(dataReceived);
+                        }
+                        break;
+                    case 'Price Change (Rs)':
+                        if (dataReceived !== null) {
+                            if (ascending) {
+                                dataReceived.sort((lhs, rhs) => {
+                                    return parseFloat(lhs) - parseFloat(rhs);
+                                });
+                            } else {
+                                dataReceived.reverse();
+                            }
+                            clearTable();
+                            filteredDisplay(dataReceived);
+                        }
+                        break;
+                }
+            })
+        });
+
+        var dataReceived = null;
+
         spinner.addEventListener('input', (evt) => {
             inputChange();
         });
@@ -122,25 +258,47 @@
             inputChange();
         });
 
+        searchField.addEventListener('input', (evt) => {
+            filteredDisplay(dataReceived);
+        });
+
+        function filteredDisplay (tableData) {
+            var searchVal = searchField.value;
+            if (tableData !== null) {
+                var displayRows = tableData.filter(row => {
+                    return row.stockName.indexOf(searchVal) === 0;
+                });
+                clearTable();
+                populateTable(displayRows);
+            }
+        }
+
+        function clearTable() {
+            var tableDom = document.getElementById('main-table');
+            Array.from(tableDom.rows).forEach(row => {
+                tableDom.removeChild(row);
+            });
+        }
+
         function inputChange() {
             var stocksDBVal = stocksDB.value;
-            var stockCount = parseInt(spinner.value, 10);
+            var stockCount = parseInt(spinner.value, 10) || 1;
             var obj = { 'stocksDBVal': stocksDBVal, 'stockCount': stockCount };
             var myJSON = JSON.stringify(obj);
             fetch("/MoreData/" + myJSON)
                 .then(response => response.json())
                 .then((tableData) => {
-                    var tableDom = document.getElementById('main-table');
-                    Array.from(tableDom.rows).forEach(row => {
-                        tableDom.removeChild(row);
-                    })
-                    populateTable(tableData.chart_data);
-                    showCount.innerHTML = tableData.chart_data.length;
+                    dataReceived = tableData.chart_data;
+                    clearTable();
+                    filteredDisplay(tableData.chart_data);
                 })
                 .catch(() => { });
         }
 
         function populateTable(tableData) {
+            if (tableData === null) {
+                return;
+            }
             var tableDom = document.getElementById('main-table');
             tableData.forEach((element, index) => {
                 var tr = document.createElement("tr");
@@ -217,9 +375,11 @@
                 tr.appendChild(td8);
                 tableDom.append(tr);
             });
+            showCount.innerHTML = tableData.length;
         }
-        var tableData = {{ data.chart_data | safe }};
-        populateTable(tableData);
+
+        dataReceived = {{ data.chart_data | safe }};
+        populateTable(dataReceived);
     </script>
 </body>
 
