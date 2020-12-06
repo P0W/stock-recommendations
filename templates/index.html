@@ -6,7 +6,6 @@
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <title>_P0W:Tickertape Scrapping</title>
     <link rel="stylesheet" href="https://maxcdn.bootstrapcdn.com/bootstrap/3.4.1/css/bootstrap.min.css">
-
     <style>
         .panel-body {
             width: 100%;
@@ -21,6 +20,10 @@
         .entry {
             height: 20px;
             border-radius: 2px;
+        }
+
+        .entry-search {
+            margin-left: 30px;
         }
 
         .bullish {
@@ -72,9 +75,6 @@
 </head>
 
 <body>
-    <script src="https://ajax.googleapis.com/ajax/libs/jquery/3.5.1/jquery.min.js"></script>
-    <script src="https://maxcdn.bootstrapcdn.com/bootstrap/3.4.1/js/bootstrap.min.js"></script>
-
     <div class="container">
         <h2>Market Sentiments</h2>
         <p>Stock recomendations as collected from <a href="https://tickertape.in" target="_blank">tickertape.in</a> and
@@ -83,28 +83,27 @@
         <table class="table table-bordered controls">
             <tr>
                 <td>
-                    <label for="stockCount">Max Entries:</label> <input type="text" id="stockCount" class='entry' value="15">
+                    <label for="stockCount">Max Entries:</label> <input type="text" id="stockCount" class='entry'
+                        value="15">
                 </td>
                 <td>
                     <label for="stocksDB">Choose a Database:</label>
-                </td>
-                <td>
                     <select name="stocksDB" id="stocksDB" class='entry'>
                         <option value="stocksLargeCap">Nifty Index 50</option>
                         <option value="stocksMidCap">Nifty Midcap 150</option>
                     </select>
                 </td>
+            </tr>
+            <tr>
+                <td>
+                    <label for="searchField"> Search:</label> <input type="text" id="searchField" class='entry-search'
+                        value="">
+                </td>
                 <td>
                     <label for="showCount"> Current Count:</label> <span id="showCount">15</span>
                 </td>
-                <td>
-                    <label for="searchField"> Search:</label> <input type="text" id="searchField" class='entry' value="">
-                </td>
             </tr>
         </table>
-        
-        
-
 
         <div class="panel-body">
             <table class="table table-bordered">
@@ -129,6 +128,9 @@
         </div>
     </div>
 
+    <script src="https://ajax.googleapis.com/ajax/libs/jquery/3.5.1/jquery.min.js"></script>
+    <script src="https://maxcdn.bootstrapcdn.com/bootstrap/3.4.1/js/bootstrap.min.js"></script>
+
     <script>
         var spinner = document.getElementById('stockCount');
         var stocksDB = document.getElementById('stocksDB');
@@ -137,6 +139,7 @@
         var searchField = document.getElementById('searchField');
 
         var headerDoms = document.getElementsByClassName('header');
+        var dataReceived = null;
 
         var sortOrders = {
             'Stock Name': false,
@@ -149,120 +152,120 @@
             'Price Change (Rs)': true
         };
 
-        Array.from(headerDoms).forEach(dom => {
-            dom.addEventListener('click', (evt) => {
-                sortOrders[evt.target.innerHTML] = !sortOrders[evt.target.innerHTML];
-                var ascending = sortOrders[evt.target.innerHTML];
-                switch (evt.target.innerHTML) {
-                    case 'Stock Name':
-                        if (dataReceived !== null) {
-                            if (ascending) {
-                                dataReceived.sort((lhs, rhs) => lhs.stockName.localeCompare(rhs.stockName));
-                            } else {
-                                dataReceived.reverse();
-                            }
-                            clearTable();
-                            filteredDisplay(dataReceived);
-                        }
-                        break;
-                    case 'Sector':
-                        if (dataReceived !== null) {
-                            if (ascending) {
-                                dataReceived.sort((lhs, rhs) => lhs.stockSector.localeCompare(rhs.stockSector));
-                            } else {
-                                dataReceived.reverse();
-                            }
-                            clearTable();
-                            filteredDisplay(dataReceived);
-                        }
-                        break;
-                    case 'No. of Analysts':
-                        if (dataReceived !== null) {
-                            if (ascending) {
-                                dataReceived.sort((lhs, rhs) => lhs.analystCount - rhs.analystCount);
-                            } else {
-                                dataReceived.reverse();
-                            }
-                            clearTable();
-                            filteredDisplay(dataReceived);
-                        }
-                        break;
-                    case 'Buy Recomendations':
-                        if (dataReceived !== null) {
-                            if (ascending) {
-                                dataReceived.sort((lhs, rhs) => lhs.analystRec - rhs.analystRec);
-                            } else {
-                                dataReceived.reverse();
-                            }
-                            clearTable();
-                            filteredDisplay(dataReceived);
-                        }
-                        break;
-                    case 'Technical Indicator':
-                        if (dataReceived !== null) {
-                            if (ascending) {
-                                dataReceived.sort((lhs, rhs) => lhs.rating.localeCompare(rhs.rating));
-                            } else {
-                                dataReceived.reverse();
-                            }
-                            clearTable();
-                            filteredDisplay(dataReceived);
-                        }
-                        break;
-                    case 'Community Sentiments':
-                        if (dataReceived !== null) {
-                            if (ascending) {
-                                dataReceived.sort((lhs, rhs) => lhs.buySentiment.localeCompare(rhs.buySentiment));
-                            } else {
-                                dataReceived.reverse();
-                            }
-                            clearTable();
-                            filteredDisplay(dataReceived);
-                        }
-                        break;
-                    case 'LTP (Rs)':
-                        if (dataReceived !== null) {
-                            if (ascending) {
-                                dataReceived.sort((lhs, rhs) => lhs.livePrice - rhs.livePrice);
-                            } else {
-                                dataReceived.reverse();
-                            }
-                            clearTable();
-                            filteredDisplay(dataReceived);
-                        }
-                        break;
-                    case 'Price Change (Rs)':
-                        if (dataReceived !== null) {
-                            if (ascending) {
-                                dataReceived.sort((lhs, rhs) => {
-                                    return parseFloat(lhs) - parseFloat(rhs);
-                                });
-                            } else {
-                                dataReceived.reverse();
-                            }
-                            clearTable();
-                            filteredDisplay(dataReceived);
-                        }
-                        break;
-                }
-            })
-        });
+        function registerEvents() {
+            spinner.addEventListener('input', (evt) => {
+                inputChange();
+            });
 
-        var dataReceived = null;
+            stocksDB.addEventListener('input', (evt) => {
+                inputChange();
+            });
 
-        spinner.addEventListener('input', (evt) => {
-            inputChange();
-        });
+            searchField.addEventListener('input', (evt) => {
+                filteredDisplay(dataReceived);
+            });
 
-        stocksDB.addEventListener('input', (evt) => {
-            inputChange();
-        });
+            Array.from(headerDoms).forEach(dom => {
+                dom.addEventListener('click', (evt) => {
+                    sortOrders[evt.target.innerHTML] = !sortOrders[evt.target.innerHTML];
+                    var ascending = sortOrders[evt.target.innerHTML];
+                    switch (evt.target.innerHTML) {
+                        case 'Stock Name':
+                            if (dataReceived !== null) {
+                                if (ascending) {
+                                    dataReceived.sort((lhs, rhs) => lhs.stockName.localeCompare(rhs.stockName));
+                                } else {
+                                    dataReceived.reverse();
+                                }
+                                clearTable();
+                                filteredDisplay(dataReceived);
+                            }
+                            break;
+                        case 'Sector':
+                            if (dataReceived !== null) {
+                                if (ascending) {
+                                    dataReceived.sort((lhs, rhs) => lhs.stockSector.localeCompare(rhs.stockSector));
+                                } else {
+                                    dataReceived.reverse();
+                                }
+                                clearTable();
+                                filteredDisplay(dataReceived);
+                            }
+                            break;
+                        case 'No. of Analysts':
+                            if (dataReceived !== null) {
+                                if (ascending) {
+                                    dataReceived.sort((lhs, rhs) => lhs.analystCount - rhs.analystCount);
+                                } else {
+                                    dataReceived.reverse();
+                                }
+                                clearTable();
+                                filteredDisplay(dataReceived);
+                            }
+                            break;
+                        case 'Buy Recomendations':
+                            if (dataReceived !== null) {
+                                if (ascending) {
+                                    dataReceived.sort((lhs, rhs) => lhs.analystRec - rhs.analystRec);
+                                } else {
+                                    dataReceived.reverse();
+                                }
+                                clearTable();
+                                filteredDisplay(dataReceived);
+                            }
+                            break;
+                        case 'Technical Indicator':
+                            if (dataReceived !== null) {
+                                if (ascending) {
+                                    dataReceived.sort((lhs, rhs) => lhs.rating.localeCompare(rhs.rating));
+                                } else {
+                                    dataReceived.reverse();
+                                }
+                                clearTable();
+                                filteredDisplay(dataReceived);
+                            }
+                            break;
+                        case 'Community Sentiments':
+                            if (dataReceived !== null) {
+                                if (ascending) {
+                                    dataReceived.sort((lhs, rhs) => lhs.buySentiment.localeCompare(rhs.buySentiment));
+                                } else {
+                                    dataReceived.reverse();
+                                }
+                                clearTable();
+                                filteredDisplay(dataReceived);
+                            }
+                            break;
+                        case 'LTP (Rs)':
+                            if (dataReceived !== null) {
+                                if (ascending) {
+                                    dataReceived.sort((lhs, rhs) => lhs.livePrice - rhs.livePrice);
+                                } else {
+                                    dataReceived.reverse();
+                                }
+                                clearTable();
+                                filteredDisplay(dataReceived);
+                            }
+                            break;
+                        case 'Price Change (Rs)':
+                            if (dataReceived !== null) {
+                                if (ascending) {
+                                    dataReceived.sort((lhs, rhs) => {
+                                        return parseFloat(lhs) - parseFloat(rhs);
+                                    });
+                                } else {
+                                    dataReceived.reverse();
+                                }
+                                clearTable();
+                                filteredDisplay(dataReceived);
+                            }
+                            break;
+                    }
+                })
+            });
+        }
 
-        searchField.addEventListener('input', (evt) => {
-            filteredDisplay(dataReceived);
-        });
-
-        function filteredDisplay (tableData) {
+        function filteredDisplay(tableData) {
             var searchVal = searchField.value;
             if (tableData !== null) {
                 var displayRows = tableData.filter(row => {
@@ -378,7 +381,9 @@
             showCount.innerHTML = tableData.length;
         }
 
+
         dataReceived = {{ data.chart_data | safe }};
+        registerEvents();
         populateTable(dataReceived);
     </script>
 </body>
