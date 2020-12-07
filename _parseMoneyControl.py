@@ -12,11 +12,6 @@ import re
 import sys
 import tqdm
 
-htmlPage = r'https://www.moneycontrol.com/india/stockpricequote/pharmaceuticals/cipla/C'
-h = r'https://www.moneycontrol.com/india/stockpricequote/computers-software/tataconsultancyservices/TCS'
-h2 = r'https://www.moneycontrol.com/india/stockpricequote/infrastructure-general/adaniportsspecialeconomiczone/MPS'
-h3 = r'https://www.moneycontrol.com/india/stockpricequote/glassglass-products/asahiindiaglass/AIG01'
-
 
 def stockPage(args):
     htmlPage = args['href']
@@ -103,11 +98,7 @@ def getStockInfo(TESTCOUNT=sys.maxsize):
     allStocks = nifty500()
     allStocksInfo = []
     for stocks in allStocks:
-        print('Parsing page %s' % stocks['stockName'])
         try:
-            stockData = stockPage(stocks)
-##            stockData['stockName'] = stocks['stockName']
-##            stockData['href'] = stocks['href']
             allStocksInfo.append(stockData)
         except:
             print('Error Parsing page %s' % stocks['href'])
@@ -210,13 +201,18 @@ def mergeDB(stocksLargeCap='/tmp/stocksLargeCap.db', topCount=15, moneyControlDB
 
 def parallel_getStockInfo():
     allStocks = nifty500()
-    print('Total Pages to parse %s' % len(allStocks))
     pool = Pool(processes=20)
     results = []
-    for stockInfo in tqdm.tqdm(pool.imap_unordered(stockPage, allStocks), total=len(allStocks)):
-        if bool(stockInfo):
-            results.append(stockInfo)
+    sucess_count = 0
+    iterator = tqdm.tqdm(pool.imap_unordered(stockPage, allStocks), total=len(allStocks))
+    for stockInfo in iterator:
+        try:
+            iterator.set_description('Parsing (%35s)' %  stockInfo['stockName'])
+            if bool(stockInfo):
+                sucess_count += 1
+                results.append(stockInfo)
+        except:
+            pass
+        iterator.set_postfix({'Sucess': sucess_count})
     return results
 
-# Check - TCS, TATASTEEL, CIPLA, KotakMBank, IOC
-# 29782c42cdc0eaed5cd5bd903ce7873af0c3c661

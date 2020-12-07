@@ -35,9 +35,9 @@ def updateDatabases():
     print('----updating cloud storage for stocksLargeCap.db')
     _cloudStorage.uploadDB(stocksLargeCap, stocksLargeCap)
 
-    print('---- webscrapping tickertape.in for mindcap-150 stocks----')
+    print('---- webscrapping tickertape.in for mifty-500 stocks----')
     _parseTickerTapeRecs.createDataBase(
-        stocksMidCap, _parseTickerTapeRecs.midCap150htmlPage)
+        stocksMidCap, _parseTickerTapeRecs.nifty500htmlPage)
     print('----updating cloud storage for stocksMidCap.db')
     _cloudStorage.uploadDB(stocksMidCap, stocksMidCap)
 

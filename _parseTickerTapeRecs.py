@@ -13,7 +13,7 @@ import tqdm
 
 nifty50htmlPage = r'https://www.tickertape.in/indices/nifty-index-.NSEI/constituents?type=marketcap'
 midCap150htmlPage = r'https://www.tickertape.in/indices/nifty-midcap-150-.NIMI150/constituents?type=marketcap'
-
+nifty500htmlPage =r'https://www.tickertape.in/indices/nifty-500-index-.NIFTY500/constituents?type=marketcap'
 
 def visitChildPage(htmlPage):
     soup = BeautifulSoup(requests.get(htmlPage).content, "html.parser")
@@ -71,9 +71,6 @@ def getStockInfo(htmlPage, testCount =  sys.maxsize):
             stockSymbol = st.group(2).strip()
             stockSector = st.group(3).strip()
         try:
-            print('Parsing %s, %s, %s' % (stockName, stockSymbol, stockSector))
-            #analystsData = visitChildPage(childPageHTML)
-            #analystsCount = getAnalystCount(forecastPage)
             allStocks.append({
                 'childPageHTML': childPageHTML,
                 'forecastPage': forecastPage,
@@ -88,9 +85,14 @@ def getStockInfo(htmlPage, testCount =  sys.maxsize):
             break
     
     pool = Pool(processes=20)
-    for stockInfo in tqdm.tqdm(pool.imap_unordered(parseStockData, allStocks), total=len(allStocks)):
+    iterator = tqdm.tqdm(pool.imap_unordered(parseStockData, allStocks), total=len(allStocks))
+    sucess_count = 0
+    for stockInfo in iterator:
+        iterator.set_description('Parsing (%35s)' %  stockInfo['stockName'])
         if bool(stockInfo):
+            sucess_count += 1
             results.append(stockInfo)
+        iterator.set_postfix({'Sucess': sucess_count})
     return results
 
 
@@ -137,3 +139,6 @@ def getData(databaseName='stocksLargeCap.db', topCount=10):
         pass
     return data
 
+
+if __name__ == '__main__':
+    createDataBase('nifty500.db', r'https://www.tickertape.in/indices/nifty-500-index-.NIFTY500/constituents?type=marketcap')
