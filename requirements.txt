@@ -1,8 +1,6 @@
 Flask==1.1.2
 bs4
 requests
-APScheduler
-gitPython
 tqdm
 google-cloud-storage
 GoogleAppEngineCloudStorageClient==1.9.22.1
