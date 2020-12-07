@@ -139,6 +139,3 @@ def getData(databaseName='stocksLargeCap.db', topCount=10):
         pass
     return data
 
-
-if __name__ == '__main__':
-    createDataBase('nifty500.db', r'https://www.tickertape.in/indices/nifty-500-index-.NIFTY500/constituents?type=marketcap')

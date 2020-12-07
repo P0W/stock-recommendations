@@ -25,26 +25,26 @@ def getCurrentTimeStamp():
 
 def updateDatabases():
     print('---- webscrapping moneycontrol.com ----')
-    _parseMoneyControl.createDataBase(moneyControlDB)
+    _parseMoneyControl.createDataBase(rootFolder + moneyControlDB)
     print('----updating cloud storage for moneyControlDB.db')
-    _cloudStorage.uploadDB(moneyControlDB, moneyControlDB)
+    _cloudStorage.uploadDB(rootFolder + moneyControlDB, moneyControlDB)
 
     print('---- webscrapping tickertape.in for nifty-50 stocks----')
     _parseTickerTapeRecs.createDataBase(
-        stocksLargeCap, _parseTickerTapeRecs.nifty50htmlPage)
+        rootFolder + stocksLargeCap, _parseTickerTapeRecs.nifty50htmlPage)
     print('----updating cloud storage for stocksLargeCap.db')
-    _cloudStorage.uploadDB(stocksLargeCap, stocksLargeCap)
+    _cloudStorage.uploadDB(rootFolder + stocksLargeCap, stocksLargeCap)
 
     print('---- webscrapping tickertape.in for mifty-500 stocks----')
     _parseTickerTapeRecs.createDataBase(
-        stocksMidCap, _parseTickerTapeRecs.nifty500htmlPage)
+        rootFolder + stocksMidCap, _parseTickerTapeRecs.nifty500htmlPage)
     print('----updating cloud storage for stocksMidCap.db')
-    _cloudStorage.uploadDB(stocksMidCap, stocksMidCap)
+    _cloudStorage.uploadDB(rootFolder + stocksMidCap, stocksMidCap)
 
     # Mark timestamp
-    with open(timeStampFile, 'w') as fileHandle:
+    with open(rootFolder + timeStampFile, 'w') as fileHandle:
         fileHandle.write(getCurrentTimeStamp())
-    _cloudStorage.uploadDB(timeStampFile, timeStampFile)
+    _cloudStorage.uploadDB(rootFolder + timeStampFile, timeStampFile)
 
 
 def modification_date():
