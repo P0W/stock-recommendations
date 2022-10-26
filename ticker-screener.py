@@ -79,9 +79,17 @@ def parallelFetch(args):
     comment, recom, info, ticker = getContents(page)
     fin_comment = hasNegativeComment(page, "financials")
     holdings_comment = hasNegativeComment(page, "holdings")
-    if not comment and not fin_comment and not holdings_comment:
+    forecasts_comment = hasNegativeComment(page, "forecasts")
+    # print (forecasts_comment)
+    if (
+        not comment
+        and not fin_comment
+        and not holdings_comment
+        and not forecasts_comment
+    ):
         # print (recom)
         roce, roe, cons = getRatioFromScreener(ticker)
+        # print (args['stock'], forecasts_comment, page)
         return args["stock"], recom, info, ticker, roce, roe, cons
     return None, None, None, None, None, None, None
 
@@ -101,6 +109,9 @@ def getStockList(
 
 
 if __name__ == "__main__":
+    # r = parallelFetch({'url':sys.argv[1]})
+    # print(r)
+    # sys.exit(0)
     # stocks = getStockList('https://www.tickertape.in/indices/nifty200-.NIFTY200/constituents?type=marketcap')
     if len(sys.argv) == 2:
         stocks = getStockList(sys.argv[1])
@@ -115,7 +126,6 @@ if __name__ == "__main__":
     for src in iterator:
         stock, recom, info, ticker, roce, roe, cons = src
         if stock and recom > 0 and cons <= 1:
-            # iterator.set_description('Scanned (%50s <%5s>)' %  ( src['nfs_dir'], src['hostName']))
             sucess_count += 1
             results.append((stock, recom, info, ticker, roce, roe, cons))
         iterator.set_postfix({"Sucess": sucess_count})
