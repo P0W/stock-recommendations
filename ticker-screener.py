@@ -5,18 +5,47 @@
 import sys
 import requests
 import multiprocessing
+import csv
 
 import tqdm
 from bs4 import BeautifulSoup
 
 
-def hasNegativeComment(page, endPoint):
+def hasNegativeComment(page, endPoint, include_match_tags=False):
     res = requests.get("%s/%s" % (page, endPoint))
     negative_comment = True
+    results = []
     if res.ok:
         soup = BeautifulSoup(res.content, features="html.parser")
-        if not soup.select_one(".icon-negative-comment"):
+        if not include_match_tags:
+            if not soup.select_one(".icon-negative-comment"):
+                negative_comment = False
+        else:
+            neg_tags = soup.select(".icon-negative-comment")
             negative_comment = False
+
+            search_tags = [
+                "Intrinsic Value",
+                "ROE vs FD rates",
+                "Dividend Returns",
+                "Entry Point",
+                "No Red Flags",
+                "Decreased Total Promoter Holding",
+                "Low Pledged Promoter Holding",
+                "Total Retail Holding",
+                "Foreign Institutional Holding",
+                "Mutual Fund Holding",
+            ]
+            for tag in neg_tags:
+                tag_text = tag.parent.select_one(".content > h4 > span").text
+                if (
+                    not search_tags[2] in tag_text
+                ):  ## Consider good if dividend return if the only negative flag
+                    tag_text = tag_text.split("\n")[0]
+                    results.append(tag_text)
+                    # print (tag_text)
+                    negative_comment = True
+                    break
 
     return negative_comment
 
@@ -53,34 +82,49 @@ def getContents(page):
 def getRatioFromScreener(ticker):
     page = "https://www.screener.in/company/%s/consolidated/" % ticker
     res = requests.get(page)
-    roce = "N/A"
-    roe = "N/A"
+    result = {
+        "roce": "N/A",
+        "roe": "N/A",
+        "market_cap": "N/A",
+        "cons": 0,
+        "price_to_book": 0,
+    }
     if res.ok:
         soup = BeautifulSoup(res.content, features="html.parser")
         ratios = soup.select("#top-ratios > li > span > span")
         for idx, ratio in enumerate(ratios):
-            try:
-                if idx == 7:
-                    roce = float(ratio.text.replace("%", ""))
+            try:  ## 2 and 3 are high and low value
+                if idx == 7:  ## Hard coded rows from Screener.in
+                    result["roce"] = float(ratio.text.replace("%", ""))
                 if idx == 8:
-                    roe = float(ratio.text.replace("%", ""))
+                    result["roe"] = float(ratio.text.replace("%", ""))
+                if idx == 0:
+                    result["market_cap"] = int(ratio.text.replace(",", ""))
+                if idx == 1:
+                    cmp = float(ratio.text.replace(",", ""))
+                if idx == 5:
+                    book_value = float(ratio.text.replace(",", ""))
+                    result["price_to_book"] = int(cmp / book_value)
             except Exception as e:
                 print("Error %s, %s, %s" % (e, ticker, ratio.text))
         cons = soup.select("#analysis > div > div.cons > ul > li")
         cons_list = []
         for con in cons:
             cons_list.append(con.text)
+        result["cons"] = len(cons_list)
+    #print(ticker, result["market_cap"], cmp, book_value, result["roce"], result["roe"])
 
-    return str(roce), str(roe), len(cons_list)  # "\n".join(cons_list)
+    return result  # "\n".join(cons_list)
 
 
 def parallelFetch(args):
     page = args["url"]
+    result = None
     comment, recom, info, ticker = getContents(page)
-    fin_comment = hasNegativeComment(page, "financials")
+    fin_comment = hasNegativeComment(page, "financials", True)
     holdings_comment = hasNegativeComment(page, "holdings")
     forecasts_comment = hasNegativeComment(page, "forecasts")
-    # print (forecasts_comment)
+    # print(comment, fin_comment, holdings_comment, forecasts_comment)
     if (
         not comment
         and not fin_comment
@@ -88,10 +132,14 @@ def parallelFetch(args):
         and not forecasts_comment
     ):
         # print (recom)
-        roce, roe, cons = getRatioFromScreener(ticker)
+        result = getRatioFromScreener(ticker)
         # print (args['stock'], forecasts_comment, page)
-        return args["stock"], recom, info, ticker, roce, roe, cons
-    return None, None, None, None, None, None, None
+        result["stock"] = args["stock"]
+        result["info"] = info
+        result["ticker"] = ticker
+        result["recom"] = recom
+        return result
+    return None
 
 
 def getStockList(
@@ -109,33 +157,42 @@ def getStockList(
 
 
 if __name__ == "__main__":
-    # r = parallelFetch({'url':sys.argv[1]})
-    # print(r)
-    # sys.exit(0)
-    # stocks = getStockList('https://www.tickertape.in/indices/nifty200-.NIFTY200/constituents?type=marketcap')
+    if len(sys.argv) == 3:  ## TEST  'stock' as 'TEST'
+        r = parallelFetch({"url": sys.argv[1], "stock": sys.argv[2]})
+        print(r)
+        sys.exit(0)
     if len(sys.argv) == 2:
         stocks = getStockList(sys.argv[1])
     else:
         stocks = getStockList(
-            "https://www.tickertape.in/indices/nifty-midsmallcap-400-.NIMI400/constituents?type=marketcap"
+            "https://www.tickertape.in/indices/nifty-500-index-.NIFTY500/constituents?type=marketcap"
         )
     results = []
     pool = multiprocessing.Pool(processes=32)
     iterator = tqdm.tqdm(pool.imap_unordered(parallelFetch, stocks), total=len(stocks))
     sucess_count = 0
     for src in iterator:
-        stock, recom, info, ticker, roce, roe, cons = src
-        if stock and recom > 0 and cons <= 1:
+        # stock, recom, info, ticker, roce, roe, cons = src
+        if src and src["recom"] > 0 and src["cons"] <= 1:
             sucess_count += 1
-            results.append((stock, recom, info, ticker, roce, roe, cons))
+            results.append(src)
         iterator.set_postfix({"Sucess": sucess_count})
-    results = sorted(results, key=lambda x: (x[2], x[1]))
+    results = sorted(results, key=lambda x: (x["info"], x["recom"], x["cons"]))
     for s in results:
         print(s)
-    with open("results.csv", "w") as fh:
-        fh.write("Name,Type,# of Buy Recom,ROCE,ROE,# of Cons\n")
-        for item in results:
-            fh.write(
-                "%s|(%s),%s,%d, %s, %s, %d\n"
-                % (item[0], item[3], item[2], item[1], item[4], item[5], item[6])
-            )
+
+    field_names = [
+        "stock",
+        "ticker",
+        "info",
+        "market_cap",
+        "roce",
+        "roe",
+        "price_to_book",
+        "cons",
+        "recom",
+    ]
+    with open("results.csv", "w") as csvfile:
+        writer = csv.DictWriter(csvfile, fieldnames=field_names)
+        writer.writeheader()
+        writer.writerows(results)
