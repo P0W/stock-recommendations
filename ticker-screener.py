@@ -112,7 +112,7 @@ def getRatioFromScreener(ticker):
         for con in cons:
             cons_list.append(con.text)
         result["cons"] = len(cons_list)
-    #print(ticker, result["market_cap"], cmp, book_value, result["roce"], result["roe"])
+    # print(ticker, result["market_cap"], cmp, book_value, result["roce"], result["roe"])
 
     return result  # "\n".join(cons_list)
 
@@ -192,6 +192,32 @@ if __name__ == "__main__":
         "cons",
         "recom",
     ]
+
+    prev_stocks = []
+    current_stocks = []
+    with open("results.csv", mode="r") as infile:
+        reader = csv.reader(infile)
+        for rows in reader:
+            if rows[0] == "ticker":
+                prev_stocks.append(rows[1])
+
+    prev_stocks.sort()
+
+    for item in results:
+        current_stocks.append(item["ticker"])
+
+    diff_new = set(prev_stocks) - set(current_stocks)
+    diff_old = set(current_stocks) - set(prev_stocks)
+
+    diff_new = list(diff_new)
+    diff_old = list(diff_old)
+
+    print("Stocks Removed")
+    print("\n".join(diff_new))
+
+    print("\nStocks Added")
+    print("\n".join(diff_old))
+
     with open("results.csv", "w") as csvfile:
         writer = csv.DictWriter(csvfile, fieldnames=field_names)
         writer.writeheader()
