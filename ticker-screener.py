@@ -6,13 +6,33 @@ import sys
 import requests
 import multiprocessing
 import csv
+import json
 
 import tqdm
 from bs4 import BeautifulSoup
 
 
+class TickerRequest:
+    def __init__(self):
+        self.cookies = {}
+        self.headers = {}
+        try:
+            with open("cred.json", "r") as fh:
+                creds = json.load(fh)
+                self.cookies = creds["cookies"]
+                self.header = creds["headers"]
+        except:
+            print("credentials not found using public login")
+
+    def get(self, page):
+        return requests.get(page, cookies=self.cookies, headers=self.headers)
+
+
+tickerRequest = TickerRequest()
+
+
 def hasNegativeComment(page, endPoint, include_match_tags=False):
-    res = requests.get("%s/%s" % (page, endPoint))
+    res = tickerRequest.get("%s/%s" % (page, endPoint))
     negative_comment = True
     results = []
     if res.ok:
@@ -50,8 +70,24 @@ def hasNegativeComment(page, endPoint, include_match_tags=False):
     return negative_comment
 
 
+def hasNegativeForecast(page):
+    res = tickerRequest.get("%s/forecasts" % page)
+    if res.ok:
+        # print("Forecast parse ok %s/forecasts" % page)
+        soup = BeautifulSoup(res.content, features="html.parser")
+        # with open("index.html", "w") as fh:
+        #    fh.write(str(soup))
+        if soup.select_one(".rv-xy-plot__series--custom-svg"):
+            print("not logged in")
+        if not soup.select_one(".text-red") and not soup.select_one(
+            ".icon-negative-comment"
+        ):
+            return False
+    return True
+
+
 def getContents(page):
-    res = requests.get(page)
+    res = tickerRequest.get(page)
     negative_comment = True
     recom = 0
     stock_info = ""
@@ -81,7 +117,7 @@ def getContents(page):
 
 def getRatioFromScreener(ticker):
     page = "https://www.screener.in/company/%s/consolidated/" % ticker
-    res = requests.get(page)
+    res = tickerRequest.get(page)
     result = {
         "roce": "N/A",
         "roe": "N/A",
@@ -123,7 +159,7 @@ def parallelFetch(args):
     comment, recom, info, ticker = getContents(page)
     fin_comment = hasNegativeComment(page, "financials", True)
     holdings_comment = hasNegativeComment(page, "holdings")
-    forecasts_comment = hasNegativeComment(page, "forecasts")
+    forecasts_comment = hasNegativeForecast(page)
     # print(comment, fin_comment, holdings_comment, forecasts_comment)
     if (
         not comment
@@ -145,7 +181,7 @@ def parallelFetch(args):
 def getStockList(
     baseUrl="https://www.tickertape.in/indices/nifty-index-.NSEI/constituents?type=marketcap",
 ):
-    res = requests.get(baseUrl)
+    res = tickerRequest.get(baseUrl)
     results = []
     if res.ok:
         soup = BeautifulSoup(res.content, features="html.parser")
