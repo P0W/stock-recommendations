@@ -111,7 +111,7 @@ def getContents(page):
             except:
                 recom = 0
     else:
-        print("Failed parsing")
+        print("Failed parsing %s" % page)
     return (negative_comment, recom, stock_info, ticker)
 
 
@@ -203,8 +203,18 @@ if __name__ == "__main__":
         stocks = getStockList(
             "https://www.tickertape.in/indices/nifty-500-index-.NIFTY500/constituents?type=marketcap"
         )
+    prev_stocks = []
+    current_stocks = []
+    input_file = csv.DictReader(open("results.csv", "r"))
+    for rows in input_file:
+        for item in rows:
+            if item == "ticker":
+                prev_stocks.append(rows["ticker"])
+
+    prev_stocks.sort()
+
     results = []
-    pool = multiprocessing.Pool(processes=32)
+    pool = multiprocessing.Pool(processes=16)
     iterator = tqdm.tqdm(pool.imap_unordered(parallelFetch, stocks), total=len(stocks))
     sucess_count = 0
     for src in iterator:
@@ -229,18 +239,10 @@ if __name__ == "__main__":
         "recom",
     ]
 
-    prev_stocks = []
-    current_stocks = []
-    with open("results.csv", mode="r") as infile:
-        reader = csv.reader(infile)
-        for rows in reader:
-            if rows[0] == "ticker":
-                prev_stocks.append(rows[1])
-
-    prev_stocks.sort()
-
     for item in results:
         current_stocks.append(item["ticker"])
+
+    current_stocks.sort()
 
     diff_new = set(prev_stocks) - set(current_stocks)
     diff_old = set(current_stocks) - set(prev_stocks)
