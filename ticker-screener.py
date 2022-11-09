@@ -7,7 +7,7 @@ import requests
 import multiprocessing
 import csv
 import json
-
+import aws
 import tqdm
 from bs4 import BeautifulSoup
 
@@ -203,18 +203,25 @@ if __name__ == "__main__":
         stocks = getStockList(
             "https://www.tickertape.in/indices/nifty-500-index-.NIFTY500/constituents?type=marketcap"
         )
-    prev_stocks = []
-    current_stocks = []
-    input_file = csv.DictReader(open("results.csv", "r"))
-    for rows in input_file:
-        for item in rows:
-            if item == "ticker":
-                prev_stocks.append(rows["ticker"])
+
+    try:
+        aws_s3 = aws.AWS_S3()
+        df = aws_s3.download_file('results.csv')
+        prev_stocks = df['ticker'].tolist()
+        print (prev_stocks)
+    except:
+        prev_stcoks = []
+        current_stocks = []
+        input_file = csv.DictReader(open("results.csv", "r"))
+        for rows in input_file:
+            for item in rows:
+                if item == "ticker":
+                    prev_stocks.append(rows["ticker"])
 
     prev_stocks.sort()
-
+    current_stocks = []
     results = []
-    pool = multiprocessing.Pool(processes=16)
+    pool = multiprocessing.Pool(processes=8)
     iterator = tqdm.tqdm(pool.imap_unordered(parallelFetch, stocks), total=len(stocks))
     sucess_count = 0
     for src in iterator:
@@ -260,3 +267,8 @@ if __name__ == "__main__":
         writer = csv.DictWriter(csvfile, fieldnames=field_names)
         writer.writeheader()
         writer.writerows(results)
+
+    try:
+        aws.AWS_S3().upload_file('results.csv')
+    except:
+        print ('Upload Error')
