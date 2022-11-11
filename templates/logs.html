@@ -9,15 +9,15 @@
 </head>
 
 <script>
-   
-        var ws = new WebSocket("ws://127.0.0.1:5001");
-        ws.onmessage = (event) => {
 
-            var info = JSON.parse(event.data);
-            var element = document.getElementById("info");
-            element.innerHTML = JSON.stringify(info);
-        };
-    
+    var ws = new WebSocket("ws://127.0.0.1:5001");
+    ws.onmessage = (event) => {
+
+        var info = JSON.parse(event.data);
+        var element = document.getElementById("info");
+        element.innerHTML = JSON.stringify(info);
+    };
+
 
 </script>
 

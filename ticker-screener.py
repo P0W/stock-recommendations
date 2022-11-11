@@ -18,8 +18,10 @@ import asyncio
 import queue
 import datetime
 
+import flask_thread
+
 q = queue.Queue()
-communicate_q = queue.Queue()
+
 app = Flask(__name__)
 
 
@@ -211,18 +213,6 @@ def send_update(msg):
     q.put({"data": {"time": now, "info": msg}}, block=False)
 
 
-async def run_notifier(check_msg):
-    while True:
-        pass
-    while True:
-        try:
-            msg = communicate_q.get(block=False)
-            if msg and msg == check_msg:
-                break
-        except queue.Empty:
-            pass
-
-
 async def getMessage():
     data = None
     try:
@@ -235,33 +225,24 @@ async def getMessage():
 async def socket_handler(websocket, path):
     while True:
         message = await getMessage()
-        if message:
-            await websocket.send(json.dumps(message))
-        elif message == "quit":
-            print("Finished processing")
+        if message == "quit":
             break
+        elif message:
+            await websocket.send(json.dumps(message))
 
 
-loop = asyncio.get_event_loop()
+loop = asyncio.new_event_loop()
+asyncio.set_event_loop(loop)
+
 start_server = websockets.serve(socket_handler, "127.0.0.1", 5001)
+loop.run_until_complete(start_server)
 
 
 def worker():
-    loop.run_until_complete(start_server)
     loop.run_forever()
-    # loop.run_until_complete(run_notifier('quit'))
 
 
-webscoketWorker = threading.Thread(target=lambda: worker())
-flaskWorker = threading.Thread(
-    target=lambda: app.run(port=5000, debug=True, use_reloader=False)
-)
-
-# flaskWorker = multiprocessing.Process(target=app.run, args=('localhost', 5002))
-@app.route("/")
-def home():
-    webscoketWorker.start()
-    return render_template("logs.html", data={})
+websocketWorker = threading.Thread(target=lambda: worker())
 
 
 if __name__ == "__main__":
@@ -272,7 +253,7 @@ if __name__ == "__main__":
     if len(sys.argv) == 2:
         stocks = getStockList(sys.argv[1])
     else:
-        flaskWorker.start()
+        flask_thread.start_server(websocketWorker)
         stocks = getStockList(
             # "https://www.tickertape.in/indices/nifty-200-index-.NIFTY200/constituents?type=marketcap"
             "https://www.tickertape.in/indices/nifty-500-index-.NIFTY500/constituents?type=marketcap"
@@ -307,6 +288,8 @@ if __name__ == "__main__":
             results.append(src)
         # iterator.set_postfix({"Sucess": sucess_count})
         send_update({"success": sucess_count, "current": index, "total": total})
+    pool.close()
+
     results = sorted(results, key=lambda x: (x["info"], x["recom"], x["cons"]))
     for s in results:
         print(s)
@@ -350,8 +333,7 @@ if __name__ == "__main__":
     except:
         print("Upload Error")
 
-    print("Sending Quit")
-
-    communicate_q.put("quit", block=False)
-    webscoketWorker.join()
-    flaskWorker.join()
+    q.put("quit", block=False)
+    flask_thread.stop_server()
+    loop.call_soon_threadsafe(loop.stop)  # here
+    websocketWorker.join(timeout=0.5)
