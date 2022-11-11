@@ -174,8 +174,7 @@ def parallelFetch(args):
         result["info"] = info
         result["ticker"] = ticker
         result["recom"] = recom
-        return result
-    return None
+    return result
 
 
 def getStockList(
