@@ -8,8 +8,19 @@ import multiprocessing
 import csv
 import json
 import aws
-import tqdm
+
+# import tqdm
 from bs4 import BeautifulSoup
+from flask import Flask, render_template
+import websockets
+import threading
+import asyncio
+import queue
+import datetime
+
+q = queue.Queue()
+communicate_q = queue.Queue()
+app = Flask(__name__)
 
 
 class TickerRequest:
@@ -155,25 +166,29 @@ def getRatioFromScreener(ticker):
 
 def parallelFetch(args):
     page = args["url"]
-    result = None
-    comment, recom, info, ticker = getContents(page)
-    fin_comment = hasNegativeComment(page, "financials", True)
-    holdings_comment = hasNegativeComment(page, "holdings")
-    forecasts_comment = hasNegativeForecast(page)
-    # print(comment, fin_comment, holdings_comment, forecasts_comment)
-    if (
-        not comment
-        and not fin_comment
-        and not holdings_comment
-        and not forecasts_comment
-    ):
-        # print (recom)
-        result = getRatioFromScreener(ticker)
-        # print (args['stock'], forecasts_comment, page)
-        result["stock"] = args["stock"]
-        result["info"] = info
-        result["ticker"] = ticker
-        result["recom"] = recom
+    try:
+        result = None
+        comment, recom, info, ticker = getContents(page)
+        fin_comment = hasNegativeComment(page, "financials", True)
+        holdings_comment = hasNegativeComment(page, "holdings")
+        forecasts_comment = hasNegativeForecast(page)
+        # print(comment, fin_comment, holdings_comment, forecasts_comment)
+        if (
+            not comment
+            and not fin_comment
+            and not holdings_comment
+            and not forecasts_comment
+        ):
+            # print (recom)
+            result = getRatioFromScreener(ticker)
+            # print (args['stock'], forecasts_comment, page)
+            result["stock"] = args["stock"]
+            result["info"] = info
+            result["ticker"] = ticker
+            result["recom"] = recom
+    except:
+        print("Error on %s" % page)
+        pass
     return result
 
 
@@ -191,6 +206,64 @@ def getStockList(
     return results
 
 
+def send_update(msg):
+    now = str(datetime.datetime.now())
+    q.put({"data": {"time": now, "info": msg}}, block=False)
+
+
+async def run_notifier(check_msg):
+    while True:
+        pass
+    while True:
+        try:
+            msg = communicate_q.get(block=False)
+            if msg and msg == check_msg:
+                break
+        except queue.Empty:
+            pass
+
+
+async def getMessage():
+    data = None
+    try:
+        data = q.get(block=False)
+    except queue.Empty:
+        pass
+    return data
+
+
+async def socket_handler(websocket, path):
+    while True:
+        message = await getMessage()
+        if message:
+            await websocket.send(json.dumps(message))
+        elif message == "quit":
+            print("Finished processing")
+            break
+
+
+loop = asyncio.get_event_loop()
+start_server = websockets.serve(socket_handler, "127.0.0.1", 5001)
+
+
+def worker():
+    loop.run_until_complete(start_server)
+    loop.run_forever()
+    # loop.run_until_complete(run_notifier('quit'))
+
+
+webscoketWorker = threading.Thread(target=lambda: worker())
+flaskWorker = threading.Thread(
+    target=lambda: app.run(port=5000, debug=True, use_reloader=False)
+)
+
+# flaskWorker = multiprocessing.Process(target=app.run, args=('localhost', 5002))
+@app.route("/")
+def home():
+    webscoketWorker.start()
+    return render_template("logs.html", data={})
+
+
 if __name__ == "__main__":
     if len(sys.argv) == 3:  ## TEST  'stock' as 'TEST'
         r = parallelFetch({"url": sys.argv[1], "stock": sys.argv[2]})
@@ -199,15 +272,18 @@ if __name__ == "__main__":
     if len(sys.argv) == 2:
         stocks = getStockList(sys.argv[1])
     else:
+        flaskWorker.start()
         stocks = getStockList(
+            # "https://www.tickertape.in/indices/nifty-200-index-.NIFTY200/constituents?type=marketcap"
             "https://www.tickertape.in/indices/nifty-500-index-.NIFTY500/constituents?type=marketcap"
         )
 
+    prev_stocks = []
     try:
         aws_s3 = aws.AWS_S3()
-        df = aws_s3.download_file('results.csv')
-        prev_stocks = df['ticker'].tolist()
-        print (prev_stocks)
+        df = aws_s3.download_file("results.csv")
+        prev_stocks = df["ticker"].tolist()
+        print(prev_stocks)
     except:
         prev_stcoks = []
         current_stocks = []
@@ -221,14 +297,16 @@ if __name__ == "__main__":
     current_stocks = []
     results = []
     pool = multiprocessing.Pool(processes=8)
-    iterator = tqdm.tqdm(pool.imap_unordered(parallelFetch, stocks), total=len(stocks))
+    # iterator = tqdm.tqdm()
     sucess_count = 0
-    for src in iterator:
+    total = len(stocks)
+    for index, src in enumerate(pool.imap_unordered(parallelFetch, stocks), 1):
         # stock, recom, info, ticker, roce, roe, cons = src
         if src and src["recom"] > 0 and src["cons"] <= 1:
             sucess_count += 1
             results.append(src)
-        iterator.set_postfix({"Sucess": sucess_count})
+        # iterator.set_postfix({"Sucess": sucess_count})
+        send_update({"success": sucess_count, "current": index, "total": total})
     results = sorted(results, key=lambda x: (x["info"], x["recom"], x["cons"]))
     for s in results:
         print(s)
@@ -268,6 +346,12 @@ if __name__ == "__main__":
         writer.writerows(results)
 
     try:
-        aws.AWS_S3().upload_file('results.csv')
+        aws.AWS_S3().upload_file("results.csv")
     except:
-        print ('Upload Error')
+        print("Upload Error")
+
+    print("Sending Quit")
+
+    communicate_q.put("quit", block=False)
+    webscoketWorker.join()
+    flaskWorker.join()

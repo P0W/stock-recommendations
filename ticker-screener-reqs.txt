@@ -1,4 +1,7 @@
+python
 bs4
 requests
 boto3
 pandas
+flask
+websockets
