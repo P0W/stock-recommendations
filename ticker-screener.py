@@ -12,7 +12,6 @@ from io import StringIO
 
 # import tqdm
 from bs4 import BeautifulSoup
-from flask import Flask, render_template
 import websockets
 import threading
 import asyncio
@@ -22,8 +21,6 @@ import datetime
 import flask_thread
 
 q = queue.Queue()
-
-app = Flask(__name__)
 
 
 class TickerRequest:
@@ -266,12 +263,12 @@ if __name__ == "__main__":
         aws_s3 = aws.AWS_S3()
         content = aws_s3.download_file("results.csv")
         csv_handle = StringIO(content)
-        print ('Used S3 artifact')
+        print("Used S3 artifact")
     except:
         prev_stcoks = []
         current_stocks = []
         csv_handle = open("results.csv", "r")
-        print ('Used local artifact')
+        print("Used local artifact")
 
     input_file = csv.DictReader(csv_handle)
     for rows in input_file:
@@ -282,7 +279,9 @@ if __name__ == "__main__":
     prev_stocks.sort()
     current_stocks = []
     results = []
-    pool = multiprocessing.Pool(processes=8)
+    process_count = multiprocessing.cpu_count()
+    print("Using %d core(s)" % process_count)
+    pool = multiprocessing.Pool(processes=process_count)
     # iterator = tqdm.tqdm()
     sucess_count = 0
     total = len(stocks)
