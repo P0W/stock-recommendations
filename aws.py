@@ -1,7 +1,8 @@
 import boto3
-import pandas
 import os
 import json
+import csv
+from io import StringIO
 
 
 class AWS_S3:
@@ -10,12 +11,13 @@ class AWS_S3:
             creds = json.load(fh)
             self.aws_access_key = creds["aws_access_key"]
             self.aws_secret_key = creds["aws_secret_key"]
+            self.aws_region_name = creds["aws_region_name"]
 
         self.s3_client = boto3.client(
             "s3",
             aws_access_key_id=self.aws_access_key,
             aws_secret_access_key=self.aws_secret_key,
-            region_name="ap-south-1",
+            region_name=self.aws_region_name,
         )
         self.bucket = "tickertape-screener-bucket"
 
@@ -30,13 +32,22 @@ class AWS_S3:
     def download_file(self, file_name):
         try:
             obj = self.s3_client.get_object(Bucket=self.bucket, Key=file_name)
-            data = pandas.read_csv(obj["Body"])
-        except:
+            data = obj["Body"].read().decode()
+        except Exception as e:
+            print("Error", e)
             return None
         return data
 
 
 if __name__ == "__main__":
-    #data = AWS_S3().download_file("results.csv")
-    #print(data["ticker"].tolist())
-    AWS_S3().upload_file('results.csv')
+    content = AWS_S3().download_file("results.csv")
+    file = StringIO(content)
+    input_file = csv.DictReader(file)
+    for rows in input_file:
+        for item in rows:
+            if item == "ticker":
+                print(rows["ticker"])
+    # csv_data = csv.reader(file, delimiter=",")
+    # for row in csv_data:
+    #     print(row['ticker'])
+    # AWS_S3().upload_file('results.csv')

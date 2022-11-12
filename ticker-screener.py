@@ -8,6 +8,7 @@ import multiprocessing
 import csv
 import json
 import aws
+from io import StringIO
 
 # import tqdm
 from bs4 import BeautifulSoup
@@ -260,19 +261,23 @@ if __name__ == "__main__":
         )
 
     prev_stocks = []
+    csv_handle = None
     try:
         aws_s3 = aws.AWS_S3()
-        df = aws_s3.download_file("results.csv")
-        prev_stocks = df["ticker"].tolist()
-        print(prev_stocks)
+        content = aws_s3.download_file("results.csv")
+        csv_handle = StringIO(content)
+        print ('Used S3 artifact')
     except:
         prev_stcoks = []
         current_stocks = []
-        input_file = csv.DictReader(open("results.csv", "r"))
-        for rows in input_file:
-            for item in rows:
-                if item == "ticker":
-                    prev_stocks.append(rows["ticker"])
+        csv_handle = open("results.csv", "r")
+        print ('Used local artifact')
+
+    input_file = csv.DictReader(csv_handle)
+    for rows in input_file:
+        for item in rows:
+            if item == "ticker":
+                prev_stocks.append(rows["ticker"])
 
     prev_stocks.sort()
     current_stocks = []
