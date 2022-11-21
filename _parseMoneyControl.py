@@ -81,12 +81,12 @@ def stockPage(args):
 def nifty500(htmlPage='https://www.moneycontrol.com/markets/indian-indices/top-nse-500-companies-list/7?classic=true'):
     soup = BeautifulSoup(requests.get(htmlPage).content, 'html.parser')
     indices = soup.find('div', {'class': 'indices'})
-    allTrs = indices.findAll('tr')
-    allTrs = allTrs[1:]
+    allTrs = soup.findAll('#indicesTable > tbody > tr')
+    #allTrs = allTrs[1:]
     results = []
     for tr in allTrs:
-        href = tr.select_one('td > p > a').attrs['href']
-        stockName = tr.select_one('td > p > a').text
+        href = tr.select_one('td > a').attrs['href']
+        stockName = tr.select_one('td >  a').text
         results.append({
             'href': href,
             'stockName': stockName
